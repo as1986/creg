@@ -30,7 +30,7 @@ class IOLogisticRegression:
     l2: float, default=0
         L2 regularization strength
     """
-    def __init__(self, l1=0.0, l2=0.0):
+    def __init__(self, l1=1e-1, l2=0.0):
         self.l1 = l1
         self.l2 = l2
 
@@ -60,6 +60,9 @@ class IOLogisticRegression:
         self.W = np.zeros(shape=(infeats, outfeats))
         G = np.zeros(shape=(infeats, outfeats))
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
+        U = np.ones(shape=(infeats,outfeats)) * 1e-300
+        ld = np.ones(shape=(infeats,outfeats)) * self.l1
+
         for i in range(iterations):
             sys.stderr.write('Iteration: %d\n' % i)
             G.fill(0.0)
@@ -76,7 +79,10 @@ class IOLogisticRegression:
             sys.stderr.write('  Loss = %f\n' % loss)
             G /= minibatch_size
             H += np.square(G)
-            self.W -= np.divide(G, np.sqrt(H)) * eta
+            U += G
+            threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
+            self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
+            # self.W -= np.divide(G, np.sqrt(H)) * eta
         return self
 
     def predict_(self, x, n, probs):
