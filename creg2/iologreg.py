@@ -30,7 +30,7 @@ class IOLogisticRegression:
     l2: float, default=0
         L2 regularization strength
     """
-    def __init__(self, l1=1e-1, l2=0.0):
+    def __init__(self, l1=1e-2, l2=0.0):
         self.l1 = l1
         self.l2 = l2
 
@@ -41,7 +41,12 @@ class IOLogisticRegression:
         found = False
         for yi in n:
             if yi == y: found = True
+            # print 'x: {}, {}'.format(x, len(x))
+            # print 'w: {}, {}'.format(W, len(W))
+            # print 'xw: {}'.format(xw)
+            # print 'lbl features: {}, {}'.format(y_feats[yi], len(y_feats[yi]))
             u = xw.dot(y_feats[yi])
+            # print 'u: {}, {}'.format(u, len(u))
             log_probs[yi] = u
             z = logadd(z, u)
         if not found:
@@ -53,7 +58,7 @@ class IOLogisticRegression:
             G += np.outer(x, y_feats[yi]) * delta
         return loss
 
-    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=300, minibatch_size=1000, eta=1.0):
+    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0):
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
         self.y_feats = y_feats
@@ -82,7 +87,6 @@ class IOLogisticRegression:
             U += G
             threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
             self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
-            # self.W -= np.divide(G, np.sqrt(H)) * eta
         return self
 
     def predict_(self, x, n, probs):
