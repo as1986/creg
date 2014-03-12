@@ -30,7 +30,7 @@ class IOLogisticRegression:
     l2: float, default=0
         L2 regularization strength
     """
-    def __init__(self, l1=1e-2, l2=0.0):
+    def __init__(self, l1=1e-1, l2=0.0):
         self.l1 = l1
         self.l2 = l2
 
@@ -58,7 +58,7 @@ class IOLogisticRegression:
             G += np.outer(x, y_feats[yi]) * delta
         return loss
 
-    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0):
+    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0, l1=1e-1):
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
         self.y_feats = y_feats

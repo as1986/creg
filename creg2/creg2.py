@@ -15,7 +15,7 @@ parser.add_argument('--allfeatures', type=str, help='file that has all features'
 parser.add_argument('--tx', type=str, help='testing features')
 parser.add_argument('--ty', type=str, help='testing responses')
 parser.add_argument('--output', type=str, help='output file')
-
+parser.add_argument('--dev', action='store_true', help='')
 args = parser.parse_args()
 
 features = []
@@ -135,11 +135,28 @@ in_dim = len(X_dict.get_feature_names())
 
 sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
 
+
+def dev_lambda(dx_file, dy_file, x_file, y_file):
+    which_dev = []
+    (X_train, Y_train, N_train) = read_features(x_file, y_file, X_dict)
+    (X_dev, Y_dev, N_dev) = read_features(dx_file, dy_file, X_dict)
+    for step in range(-5,0):
+        import numpy
+        param = numpy.power(10, step)
+        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'dev_model_{}'.format(step))
+        predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
+        which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
+    return which_dev
+
+if args.dev:
+    dev_lambda(args.tx, args.ty, args.x, args.y)
+    exit()
+
 training_feat = [x + '.feat' for x in args.training]
 training_resp = [x + '.resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
 sys.stderr.write('       rows(X): %d\n' % len(X))
-print 'shape: {}'.format(X.shape)
+
 if args.output is not None:
     output_file = args.output
 else:
