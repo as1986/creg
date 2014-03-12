@@ -139,7 +139,7 @@ sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     which_dev = []
-    (X_dev, Y_dev, N_dev) = read_features(dx_file, dy_file, X_dict)
+    (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
     for step in range(-5,0):
         import numpy
         param = numpy.power(10, step)
