@@ -82,11 +82,11 @@ def read_features(feature_files, response_files, vectorizer):
     return (all_features, all_responses, all_neighbors)
 
 
-def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None):
+def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2):
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
-    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=300, minibatch_size=20)
+    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=300, minibatch_size=20, l1)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -142,7 +142,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     for step in range(-5,0):
         import numpy
         param = numpy.power(10, step)
-        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'dev_model_{}'.format(step))
+        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'dev_model_{}'.format(step), l1=param)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
         which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
         print which_dev[-1]
