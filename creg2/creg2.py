@@ -136,9 +136,8 @@ in_dim = len(X_dict.get_feature_names())
 sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
 
 
-def dev_lambda(dx_file, dy_file, x_file, y_file):
+def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     which_dev = []
-    (X_train, Y_train, N_train) = read_features(x_file, y_file, X_dict)
     (X_dev, Y_dev, N_dev) = read_features(dx_file, dy_file, X_dict)
     for step in range(-5,0):
         import numpy
@@ -149,14 +148,16 @@ def dev_lambda(dx_file, dy_file, x_file, y_file):
         print which_dev[-1]
     return which_dev
 
-if args.dev:
-    print dev_lambda(args.tx, args.ty, args.x, args.y)
-    exit()
 
 training_feat = [x + '.feat' for x in args.training]
 training_resp = [x + '.resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
 sys.stderr.write('       rows(X): %d\n' % len(X))
+
+
+if args.dev:
+    print dev_lambda(args.tx, args.ty, X, Y, N)
+    exit()
 
 if args.output is not None:
     output_file = args.output
