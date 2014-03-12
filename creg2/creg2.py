@@ -146,10 +146,11 @@ def dev_lambda(dx_file, dy_file, x_file, y_file):
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'dev_model_{}'.format(step))
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
         which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
+        print which_dev[-1]
     return which_dev
 
 if args.dev:
-    dev_lambda(args.tx, args.ty, args.x, args.y)
+    print dev_lambda(args.tx, args.ty, args.x, args.y)
     exit()
 
 training_feat = [x + '.feat' for x in args.training]
