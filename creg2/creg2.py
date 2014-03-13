@@ -85,11 +85,13 @@ def read_features(feature_files, response_files, vectorizer):
     return (all_features, all_responses, all_neighbors)
 
 
-def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000, warm_start=0):
+def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
+              warm_start=0):
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
-    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True, load_from=load, warm=warm_start)
+    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True,
+              load_from=load, warm=warm_start)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -143,10 +145,13 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     which_dev = []
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
-    for step in range(-5,2):
+    for step in range(-5, 2):
         import numpy
+
         param = numpy.power(10, step)
-        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'dev_model_{}'.format(step), l1=param, iterations=args.iterations,warm_start=args.warm, load=args.loadmodel)
+        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
+                          'dev_model_{}'.format(step), l1=param, iterations=args.iterations, warm_start=args.warm,
+                          load=args.loadmodel)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
         which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
         print which_dev[-1]
@@ -158,7 +163,6 @@ training_resp = [x + 'resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
 sys.stderr.write('       rows(X): %d\n' % len(X))
 
-
 if args.dev:
     print dev_lambda(args.tx, args.ty, X, Y, N)
     exit()
@@ -169,7 +173,8 @@ else:
     output_file = 'output.pred'
 
 if args.tx is not None and args.ty is not None:
-    model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel, iterations=args.iterations, warm_start=args.warm)
+    model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
+                      iterations=args.iterations, warm_start=args.warm)
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
     prediction = predict(model, tX, tY, tN, invlabels, output_file)
