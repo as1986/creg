@@ -64,13 +64,16 @@ class IOLogisticRegression:
         self.num_labels = num_labels
         self.y_feats = y_feats
         self.W = np.zeros(shape=(infeats, outfeats))
-        if load_from is not None:
-            self.W = np.load(load_from)
+
         G = np.zeros(shape=(infeats, outfeats))
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
         U = np.ones(shape=(infeats,outfeats)) * 1e-300
         ld = np.ones(shape=(infeats,outfeats)) * self.l1
-
+        if load_from is not None:
+            self.W = np.load(load_from)
+            self.U = np.load(load_from + 'U')
+            self.H = np.load(load_from + 'H')
+            self.G = np.load(load_from + 'G')
         loss_history = []
         for i in range(warm, iterations + warm):
             sys.stderr.write('Iteration: %d\n' % i)
@@ -96,7 +99,10 @@ class IOLogisticRegression:
             threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
             self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
             if i % 100 == 0 and write is True:
+                np.save('models/model_state_{}H'.format(i),self.H)
                 np.save('models/model_state_{}'.format(i),self.W)
+                np.save('models/model_state_{}U'.format(i),self.U)
+                np.save('models/model_state_{}G'.format(i),self.G)
         return self
 
     def predict_(self, x, n, probs):
