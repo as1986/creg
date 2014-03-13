@@ -75,9 +75,9 @@ class IOLogisticRegression:
         ld = np.ones(shape=(infeats, outfeats)) * self.l1
         if load_from is not None:
             self.W = np.load(load_from)
-            U = np.load(load_from + 'U')
-            H = np.load(load_from + 'H')
-            G = np.load(load_from + 'G')
+            U = np.load(load_from[:load_from.find('.npy')] + 'U.npy')
+            H = np.load(load_from[:load_from.find('.npy')] + 'H.npy')
+            G = np.load(load_from[:load_from.find('.npy')] + 'G.npy')
         loss_history = []
         for i in range(warm, iterations + warm):
             sys.stderr.write('Iteration: %d\n' % i)
@@ -103,7 +103,7 @@ class IOLogisticRegression:
             threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
                                    np.zeros(shape=(infeats, outfeats)))
             self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
-            if i % 100 == 0 and write is True:
+            if i % 50 == 0 and write is True:
                 np.save('models/model_state_{}H'.format(i), H)
                 np.save('models/model_state_{}'.format(i), self.W)
                 np.save('models/model_state_{}U'.format(i), U)

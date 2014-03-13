@@ -178,7 +178,7 @@ if args.tx is not None and args.ty is not None:
 
         writer = csv.writer(outputFile)
         writer.writerow(['predicted', 'answer', 'idx'])
-        for ((pred, ans), idx) in prediction:
+        for (idx, (pred, ans)) in enumerate(prediction):
             writer.writerow([pred, ans, idx])
 else:
     num_folds = 10
