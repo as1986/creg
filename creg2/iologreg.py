@@ -89,9 +89,6 @@ class IOLogisticRegression:
             U += G
             threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
             self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
-            if len(loss_history) > 0:
-                if loss - loss_history[-1] < 1:
-                    break
             loss_history.append(loss)
         return self
 
