@@ -88,7 +88,7 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-5
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
-    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1, write=True, load_from=load)
+    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True, load_from=load)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -132,7 +132,7 @@ def predict(model, test_X, test_Y, test_N, inverse_labels, output_file='/dev/nul
 if args.allfeatures is not None:
     X_dict = get_vectorizer(args.allfeatures)
 else:
-    X_dict = get_vectorizer(args.training[0] + '.feat')
+    X_dict = get_vectorizer(args.training[0] + 'feat')
 in_dim = len(X_dict.get_feature_names())
 
 sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
@@ -152,8 +152,8 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     return which_dev
 
 
-training_feat = [x + '.feat' for x in args.training]
-training_resp = [x + '.resp' for x in args.training]
+training_feat = [x + 'feat' for x in args.training]
+training_resp = [x + 'resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
 sys.stderr.write('       rows(X): %d\n' % len(X))
 

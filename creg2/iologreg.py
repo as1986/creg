@@ -75,8 +75,11 @@ class IOLogisticRegression:
             sys.stderr.write('Iteration: %d\n' % i)
             G.fill(0.0)
             loss = 0
+            prior_loss = 0
             for s in random.sample(range(X.shape[0]), minibatch_size):
                 loss += self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
+                prior_loss += self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
+                prior_loss += np.sum(np.absolute(G))
 
             #for k in range(self.n_classes - 1):
             #    offset = (self.n_features + 1) * k
@@ -85,6 +88,7 @@ class IOLogisticRegression:
             #        g[offset + j] += 2 * self.l2 * self.coef_[offset + j]
 
             sys.stderr.write('  Loss = %f\n' % loss)
+            sys.stderr.write('  Prior Loss = %f\n' % prior_loss)
             G /= minibatch_size
             H += np.square(G)
             U += G
