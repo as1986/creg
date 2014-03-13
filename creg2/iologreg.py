@@ -71,7 +71,6 @@ class IOLogisticRegression:
         U = np.ones(shape=(infeats,outfeats)) * 1e-300
         ld = np.ones(shape=(infeats,outfeats)) * self.l1
 
-        loss_history = []
         for i in range(iterations):
             sys.stderr.write('Iteration: %d\n' % i)
             G.fill(0.0)
@@ -91,13 +90,8 @@ class IOLogisticRegression:
             U += G
             threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
             self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
-<<<<<<< HEAD
-            loss_history.append(loss)
-=======
-            if i % 100 and write is True:
-                np.save('model_state_{}'.format(i),self.W)
-
->>>>>>> 4374f4aa2e32532af3c8c02f597a586027b2aef3
+            if i % 100 == 0 and write is True:
+                np.save('models/model_state_{}'.format(i),self.W)
         return self
 
     def predict_(self, x, n, probs):
