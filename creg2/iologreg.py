@@ -5,7 +5,8 @@ import sys
 
 INFINITY = float('inf')
 
-def logadd(a,b):
+
+def logadd(a, b):
     """
     compute log(exp(a) + exp(b))
     """
@@ -13,10 +14,11 @@ def logadd(a,b):
         return b
     if b == -INFINITY:
         return a
-    if b < a: # b - a < 0
+    if b < a:  # b - a < 0
         return a + math.log1p(math.exp(b - a))
-    else: # a - b < 0
+    else:  # a - b < 0
         return b + math.log1p(math.exp(a - b))
+
 
 class IOLogisticRegression:
     """
@@ -30,6 +32,7 @@ class IOLogisticRegression:
     l2: float, default=0
         L2 regularization strength
     """
+
     def __init__(self, l1=1e-1, l2=0.0):
         self.l1 = l1
         self.l2 = l2
@@ -58,7 +61,8 @@ class IOLogisticRegression:
             G += np.outer(x, y_feats[yi]) * delta
         return loss
 
-    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0, l1=1e-1, write=True, load_from = None, warm=0):
+    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
+            l1=1e-1, write=True, load_from=None, warm=0):
         self.l1 = l1
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
@@ -67,8 +71,8 @@ class IOLogisticRegression:
 
         G = np.zeros(shape=(infeats, outfeats))
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
-        U = np.ones(shape=(infeats,outfeats)) * 1e-300
-        ld = np.ones(shape=(infeats,outfeats)) * self.l1
+        U = np.ones(shape=(infeats, outfeats)) * 1e-300
+        ld = np.ones(shape=(infeats, outfeats)) * self.l1
         if load_from is not None:
             self.W = np.load(load_from)
             U = np.load(load_from + 'U')
@@ -96,13 +100,14 @@ class IOLogisticRegression:
             G /= minibatch_size
             H += np.square(G)
             U += G
-            threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
-            self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
+            threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
+                                   np.zeros(shape=(infeats, outfeats)))
+            self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
             if i % 100 == 0 and write is True:
-                np.save('models/model_state_{}H'.format(i),H)
-                np.save('models/model_state_{}'.format(i),self.W)
-                np.save('models/model_state_{}U'.format(i),U)
-                np.save('models/model_state_{}G'.format(i),G)
+                np.save('models/model_state_{}H'.format(i), H)
+                np.save('models/model_state_{}'.format(i), self.W)
+                np.save('models/model_state_{}U'.format(i), U)
+                np.save('models/model_state_{}G'.format(i), G)
         return self
 
     def predict_(self, x, n, probs):
@@ -117,11 +122,11 @@ class IOLogisticRegression:
             probs[y] = math.exp(probs[y] - z)
 
     def predict(self, X, N):
-        post = np.zeros(shape=(len(X),self.num_labels))
+        post = np.zeros(shape=(len(X), self.num_labels))
         return post
 
     def predict_proba(self, X, N):
-        post = np.zeros(shape=(len(X),self.num_labels))
+        post = np.zeros(shape=(len(X), self.num_labels))
         for (x, n, p) in zip(X, N, post):
-          self.predict_(x, n, p)
+            self.predict_(x, n, p)
         return post
