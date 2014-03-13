@@ -58,7 +58,7 @@ class IOLogisticRegression:
             G += np.outer(x, y_feats[yi]) * delta
         return loss
 
-    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0, l1=1e-1, write=True, load_from = None):
+    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0, l1=1e-1, write=True, load_from = None, warm=0):
         self.l1 = l1
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
@@ -71,7 +71,8 @@ class IOLogisticRegression:
         U = np.ones(shape=(infeats,outfeats)) * 1e-300
         ld = np.ones(shape=(infeats,outfeats)) * self.l1
 
-        for i in range(iterations):
+        loss_history = []
+        for i in range(warm, iterations + warm):
             sys.stderr.write('Iteration: %d\n' % i)
             G.fill(0.0)
             loss = 0

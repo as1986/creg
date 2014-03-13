@@ -16,7 +16,8 @@ parser.add_argument('--tx', type=str, help='testing features')
 parser.add_argument('--ty', type=str, help='testing responses')
 parser.add_argument('--output', type=str, help='output file')
 parser.add_argument('--dev', action='store_true', help='')
-parser.add_argument('--iterations', type=int, default='300')
+parser.add_argument('--iterations', type=int, default=300)
+parser.add_argument('--warm', type=int, default=0)
 parser.add_argument('--loadmodel', type=str, help='load a trained model')
 args = parser.parse_args()
 
@@ -84,11 +85,11 @@ def read_features(feature_files, response_files, vectorizer):
     return (all_features, all_responses, all_neighbors)
 
 
-def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-5, load=None, iterations=3000):
+def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000, warm_start=0):
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
-    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True, load_from=load)
+    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True, load_from=load, warm=warm_start)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -168,7 +169,7 @@ else:
     output_file = 'output.pred'
 
 if args.tx is not None and args.ty is not None:
-    model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel, iterations=args.iterations)
+    model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel, iterations=args.iterations, warm_start=args.warm)
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
     predict(model, tX, tY, tN, invlabels, output_file)
