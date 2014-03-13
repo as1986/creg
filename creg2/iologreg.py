@@ -58,12 +58,14 @@ class IOLogisticRegression:
             G += np.outer(x, y_feats[yi]) * delta
         return loss
 
-    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0, l1=1e-1):
+    def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0, l1=1e-1, write=True, load_from = None):
         self.l1 = l1
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
         self.y_feats = y_feats
         self.W = np.zeros(shape=(infeats, outfeats))
+        if load_from is not None:
+            self.W = np.load(load_from)
         G = np.zeros(shape=(infeats, outfeats))
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
         U = np.ones(shape=(infeats,outfeats)) * 1e-300
@@ -89,7 +91,13 @@ class IOLogisticRegression:
             U += G
             threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i+1), ld), np.zeros(shape=(infeats, outfeats)))
             self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i+1)
+<<<<<<< HEAD
             loss_history.append(loss)
+=======
+            if i % 100 and write is True:
+                np.save('model_state_{}'.format(i),self.W)
+
+>>>>>>> 4374f4aa2e32532af3c8c02f597a586027b2aef3
         return self
 
     def predict_(self, x, n, probs):
