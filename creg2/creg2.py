@@ -86,7 +86,7 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
-    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=300, minibatch_size=20, l1, write=True)
+    model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=3000, minibatch_size=20, l1, write=True)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
