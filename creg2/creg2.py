@@ -172,7 +172,14 @@ if args.tx is not None and args.ty is not None:
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel, iterations=args.iterations, warm_start=args.warm)
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
-    predict(model, tX, tY, tN, invlabels, output_file)
+    prediction = predict(model, tX, tY, tN, invlabels, output_file + '.csv')
+    with open(output_file, 'w') as outputFile:
+        import csv
+
+        writer = csv.writer(outputFile)
+        writer.writerow(['predicted', 'answer', 'idx'])
+        for ((pred, ans), idx) in prediction:
+            writer.writerow([pred, ans, idx])
 else:
     num_folds = 10
     from sklearn import cross_validation
