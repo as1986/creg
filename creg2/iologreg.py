@@ -87,7 +87,7 @@ class IOLogisticRegression:
             for s in random.sample(range(X.shape[0]), minibatch_size):
                 tiny_loss = self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
                 loss += tiny_loss
-                prior_loss += (tiny_loss + np.sum(np.absolute(self.W)))
+                prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
 
             #for k in range(self.n_classes - 1):
             #    offset = (self.n_features + 1) * k
