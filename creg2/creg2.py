@@ -15,7 +15,7 @@ parser.add_argument('--allfeatures', type=str, help='file that has all features'
 parser.add_argument('--tx', type=str, help='testing features')
 parser.add_argument('--ty', type=str, help='testing responses')
 parser.add_argument('--output', type=str, help='output file')
-parser.add_argument('--dev', action='store_true', help='')
+parser.add_argument('--dev', action='store_true', help='tx and ty as dev set: used to tune l1')
 parser.add_argument('--iterations', type=int, default=300)
 parser.add_argument('--warm', type=int, default=0)
 parser.add_argument('--loadmodel', type=str, help='load a trained model')
@@ -145,16 +145,23 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     which_dev = []
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
-    for step in range(-5, 2):
+    for step in range(-10, 2):
         import numpy
 
         param = numpy.power(10, step)
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
-                          'dev_model_{}'.format(step), l1=param, iterations=args.iterations, warm_start=args.warm,
+                          write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations, warm_start=args.warm,
                           load=args.loadmodel)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
         which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
         print which_dev[-1]
+    with open('dev.csv', 'w') as dev_out:
+        import csv
+
+        w = csv.writer(dev_out)
+        w.writerow('l1', 'correct predictions')
+        for p in which_dev:
+            w.writerow([p[0], p[1]])
     return which_dev
 
 
