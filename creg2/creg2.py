@@ -117,7 +117,7 @@ def get_descriptive_weights(W, lbl_dict, x_dict):
 def predict(model, test_X, test_Y, test_N, inverse_labels, output_file='/dev/null'):
     D = model.predict_proba(test_X, test_N)
     to_return = []
-    with open(output_file, 'w') as outputFile:
+    with open(output_file, 'w') as output_file:
         correct_count = 0
         for idx, row in enumerate(D):
             dist = {}
@@ -127,10 +127,10 @@ def predict(model, test_X, test_Y, test_N, inverse_labels, output_file='/dev/nul
             predicted = max(dist.iterkeys(), key=lambda x: dist[x])
             answer = inverse_labels[test_Y[idx]]
             to_return.append((predicted, answer))
-            outputFile.write('{}\t{}\t{}\n'.format(predicted, answer, dist))
+            output_file.write('{}\t{}\t{}\n'.format(predicted, answer, dist))
             if predicted == inverse_labels[test_Y[idx]]:
                 correct_count += 1
-        outputFile.write('accuracy:{}\n'.format(float(correct_count) / len(D)))
+        output_file.write('accuracy:{}\n'.format(float(correct_count) / len(D)))
     return to_return
 
 
@@ -141,6 +141,23 @@ else:
 in_dim = len(X_dict.get_feature_names())
 
 sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
+
+
+def soft_exact(fname):
+    import subprocess
+
+    cmd = ['python', '../tests/eval.py', fname]
+    results = subprocess.check_output(' '.join(cmd), shell=True)
+    try:
+        # ExactMatch: 0.420168067227
+        # SoftMatch: 0.529579831933
+
+        last_two_lines = results.split('\n')[-2:]
+        exact = float(last_two_lines[0].strip().split()[-1])
+        soft = float(last_two_lines[1].strip().split()[-1])
+        return (soft, exact)
+    except:
+        raise Exception('cannot get soft/exact matches: {}'.format(fname))
 
 
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
@@ -156,15 +173,21 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
                           warm_start=args.warm,
                           load=args.loadmodel)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
-        which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
+
+        # softmatch and exactmatch
+        dev_output = 'dev_output/dev_output_{}.csv'
+        write_csv(dev_output.format(step), prediction)
+        (soft, exact) = soft_exact(dev_output)
+
+        which_dev.append((step, soft, exact))
         print which_dev[-1]
-    with open('dev.csv', 'w') as dev_out:
+    with open('dev.csv', 'w') as dev_out_fh:
         import csv
 
-        w = csv.writer(dev_out)
-        w.writerow(['l1', 'correct predictions'])
+        w = csv.writer(dev_out_fh)
+        w.writerow(['l1', 'soft', 'exact'])
         for p in which_dev:
-            w.writerow([p[0], p[1]])
+            w.writerow([p[0], p[1], p[2]])
     return which_dev
 
 
@@ -182,6 +205,17 @@ if args.output is not None:
 else:
     output_file = 'output.pred'
 
+
+def write_csv(f_name, preds):
+    with open(f_name, 'w') as outputFile:
+        import csv
+
+        writer = csv.writer(outputFile)
+        writer.writerow(['predicted', 'answer', 'idx'])
+        for (idx, (pred, ans)) in enumerate(preds):
+            writer.writerow([pred, ans, idx])
+
+
 if args.tx is not None and args.ty is not None:
     import numpy
 
@@ -190,13 +224,7 @@ if args.tx is not None and args.ty is not None:
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
     prediction = predict(model, tX, tY, tN, invlabels, output_file)
-    with open(output_file + '.csv', 'w') as outputFile:
-        import csv
-
-        writer = csv.writer(outputFile)
-        writer.writerow(['predicted', 'answer', 'idx'])
-        for (idx, (pred, ans)) in enumerate(prediction):
-            writer.writerow([pred, ans, idx])
+    write_csv(output_file + '.csv', prediction)
 else:
     num_folds = 10
     from sklearn import cross_validation
