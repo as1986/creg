@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 import json
 import argparse
@@ -19,6 +20,7 @@ parser.add_argument('--dev', action='store_true', help='tx and ty as dev set: us
 parser.add_argument('--iterations', type=int, default=300)
 parser.add_argument('--warm', type=int, default=0)
 parser.add_argument('--loadmodel', type=str, help='load a trained model')
+parser.add_argument('--l1', type=int, help='l1 prior (log10)')
 args = parser.parse_args()
 
 features = []
@@ -150,7 +152,8 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 
         param = numpy.power(10, step)
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
-                          write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations, warm_start=args.warm,
+                          write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations,
+                          warm_start=args.warm,
                           load=args.loadmodel)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
         which_dev.append((step, len([x for x in predictions if x[0] == x[1]])))
@@ -159,7 +162,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         import csv
 
         w = csv.writer(dev_out)
-        w.writerow('l1', 'correct predictions')
+        w.writerow(['l1', 'correct predictions'])
         for p in which_dev:
             w.writerow([p[0], p[1]])
     return which_dev
@@ -180,8 +183,10 @@ else:
     output_file = 'output.pred'
 
 if args.tx is not None and args.ty is not None:
+    import numpy
+
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
-                      iterations=args.iterations, warm_start=args.warm)
+                      iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1))
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
     prediction = predict(model, tX, tY, tN, invlabels, output_file)
