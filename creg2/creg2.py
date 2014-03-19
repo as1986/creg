@@ -160,6 +160,16 @@ def soft_exact(fname):
         raise Exception('cannot get soft/exact matches: {}'.format(fname))
 
 
+def write_csv(f_name, preds):
+    with open(f_name, 'w') as outputFile:
+        import csv
+
+        writer = csv.writer(outputFile)
+        writer.writerow(['predicted', 'answer', 'idx'])
+        for (idx, (pred, ans)) in enumerate(preds):
+            writer.writerow([pred, ans, idx])
+
+
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     which_dev = []
@@ -176,7 +186,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 
         # softmatch and exactmatch
         dev_output = 'dev_output/dev_output_{}.csv'
-        write_csv(dev_output.format(step), prediction)
+        write_csv(dev_output.format(step), predictions)
         (soft, exact) = soft_exact(dev_output)
 
         which_dev.append((step, soft, exact))
@@ -204,16 +214,6 @@ if args.output is not None:
     output_file = args.output
 else:
     output_file = 'output.pred'
-
-
-def write_csv(f_name, preds):
-    with open(f_name, 'w') as outputFile:
-        import csv
-
-        writer = csv.writer(outputFile)
-        writer.writerow(['predicted', 'answer', 'idx'])
-        for (idx, (pred, ans)) in enumerate(preds):
-            writer.writerow([pred, ans, idx])
 
 
 if args.tx is not None and args.ty is not None:
