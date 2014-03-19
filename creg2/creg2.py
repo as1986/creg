@@ -185,8 +185,11 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
 
         # softmatch and exactmatch
-        dev_output = 'dev_output/dev_output_{}.csv'
-        write_csv(dev_output.format(step), predictions)
+        # just in case
+        import os
+        os.system('mkdir -p dev_output')
+        dev_output = 'dev_output/dev_output_{}.csv'.format(step)
+        write_csv(dev_output, predictions)
         (soft, exact) = soft_exact(dev_output)
 
         which_dev.append((step, soft, exact))
