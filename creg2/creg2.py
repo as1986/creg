@@ -190,6 +190,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         import os
 
         if os.path.isfile(dev_output):
+            print 'lambda = {} already covered, continuing'.format(step)
             continue
 
         import numpy
