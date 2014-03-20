@@ -176,7 +176,12 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     which_dev = []
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
-    for step in range(-10, 2):
+    if args.usingl2:
+        import numpy
+        r = numpy.arange(-2,2,step=0.4)
+    else:
+        r = range(-10,0)
+    for step in r:
         import numpy
 
         param = numpy.power(10, step)
