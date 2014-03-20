@@ -33,7 +33,7 @@ class IOLogisticRegression:
         L2 regularization strength
     """
 
-    def __init__(self, l1=1e-1, l2=0.0):
+    def __init__(self, l1=1e-1, l2=1e-1):
         self.l1 = l1
         self.l2 = l2
 
@@ -106,7 +106,7 @@ class IOLogisticRegression:
 
             if using_l2:
                 intermed = np.divide(U, np.sqrt(H))
-                self.W = intermed * eta * (i + 1) / l1
+                self.W = intermed * eta * (i + 1) / self.l1
             else:
                 threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
                                        np.zeros(shape=(infeats, outfeats)))
