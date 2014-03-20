@@ -146,18 +146,15 @@ sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
 def soft_exact(fname):
     import subprocess
 
-    cmd = ['python', '../tests/eval.py', fname]
+    cmd = ['python', '~/git/extractor/eval.py', fname]
     results = subprocess.check_output(' '.join(cmd), shell=True)
-    try:
         # ExactMatch: 0.420168067227
         # SoftMatch: 0.529579831933
 
-        last_two_lines = results.split('\n')[-2:]
-        exact = float(last_two_lines[0].strip().split()[-1])
-        soft = float(last_two_lines[1].strip().split()[-1])
-        return (soft, exact)
-    except:
-        raise Exception('cannot get soft/exact matches: {}'.format(fname))
+    last_two_lines = results.split('\n')[-3:]
+    exact = float(last_two_lines[0].strip().split()[-1])
+    soft = float(last_two_lines[1].strip().split()[-1])
+    return (soft, exact)
 
 
 def write_csv(f_name, preds):
