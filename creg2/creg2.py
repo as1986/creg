@@ -149,18 +149,25 @@ sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
 def soft_exact(fname):
     import subprocess
 
-    cmd = ['python', '../tests/eval.py', fname]
+    cmd = ['python', '~/git/extractor/eval.py', fname]
     results = subprocess.check_output(' '.join(cmd), shell=True)
-    try:
         # ExactMatch: 0.420168067227
         # SoftMatch: 0.529579831933
 
-        last_two_lines = results.split('\n')[-2:]
-        exact = float(last_two_lines[0].strip().split()[-1])
-        soft = float(last_two_lines[1].strip().split()[-1])
-        return (soft, exact)
-    except:
-        raise Exception('cannot get soft/exact matches: {}'.format(fname))
+    last_two_lines = results.split('\n')[-3:]
+    exact = float(last_two_lines[0].strip().split()[-1])
+    soft = float(last_two_lines[1].strip().split()[-1])
+    return (soft, exact)
+
+
+def write_csv(f_name, preds):
+    with open(f_name, 'w') as outputFile:
+        import csv
+
+        writer = csv.writer(outputFile)
+        writer.writerow(['predicted', 'answer', 'idx'])
+        for (idx, (pred, ans)) in enumerate(preds):
+            writer.writerow([pred, ans, idx])
 
 
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
@@ -178,8 +185,11 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
 
         # softmatch and exactmatch
-        dev_output = 'dev_output/dev_output_{}.csv'
-        write_csv(dev_output.format(step), prediction)
+        # just in case
+        import os
+        os.system('mkdir -p dev_output')
+        dev_output = 'dev_output/dev_output_{}.csv'.format(step)
+        write_csv(dev_output, predictions)
         (soft, exact) = soft_exact(dev_output)
 
         which_dev.append((step, soft, exact))
@@ -207,16 +217,6 @@ if args.output is not None:
     output_file = args.output
 else:
     output_file = 'output.pred'
-
-
-def write_csv(f_name, preds):
-    with open(f_name, 'w') as outputFile:
-        import csv
-
-        writer = csv.writer(outputFile)
-        writer.writerow(['predicted', 'answer', 'idx'])
-        for (idx, (pred, ans)) in enumerate(preds):
-            writer.writerow([pred, ans, idx])
 
 
 if args.tx is not None and args.ty is not None:
