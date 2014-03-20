@@ -178,10 +178,20 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
     if args.usingl2:
         import numpy
-        r = numpy.arange(-2,2,step=0.4)
+
+        r = numpy.arange(-2, 4, step=0.4)
     else:
-        r = range(-10,0)
+        r = range(-10, 0)
     for step in r:
+
+        dev_output = 'dev_output/dev_output_{}.csv'.format(step)
+
+        # check if we already covered this point
+        import os
+
+        if os.path.isfile(dev_output):
+            continue
+
         import numpy
 
         param = numpy.power(10, step)
@@ -193,10 +203,10 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 
         # softmatch and exactmatch
         # just in case
-        import os
+
 
         os.system('mkdir -p dev_output')
-        dev_output = 'dev_output/dev_output_{}.csv'.format(step)
+
         write_csv(dev_output, predictions)
         (soft, exact) = soft_exact(dev_output)
 
