@@ -71,7 +71,7 @@ class IOLogisticRegression:
 
         G = np.zeros(shape=(infeats, outfeats))
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
-        U = np.ones(shape=(infeats, outfeats)) * 1e-300
+        U = np.zeros(shape=(infeats, outfeats))
         ld = np.ones(shape=(infeats, outfeats)) * self.l1
         if load_from is not None:
             self.W = np.load(load_from)
@@ -105,7 +105,7 @@ class IOLogisticRegression:
             U += G
 
             if using_l2:
-                intermed = np.divide(U, np.multiply(np.sqrt(H), ld))
+                intermed = np.divide(-U, np.multiply(np.sqrt(H), ld))
                 self.W = intermed * eta
             else:
                 threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
