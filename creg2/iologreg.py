@@ -105,7 +105,7 @@ class IOLogisticRegression:
             U += G
 
             if using_l2:
-                intermed = np.divide(U, np.dot(np.sqrt(H), ld))
+                intermed = np.divide(U, np.multiply(np.sqrt(H), ld))
                 self.W = intermed * eta * (i + 1)
             else:
                 threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
