@@ -88,7 +88,7 @@ class IOLogisticRegression:
                 tiny_loss = self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
                 loss += tiny_loss
                 if using_l2:
-                    prior_loss += tiny_loss + self.l1 * np.sum(np.power(self.W, 2))
+                    prior_loss += tiny_loss + self.l1 * np.sum(np.multiply(self.W, self.W))
                 else:
                     prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
 
@@ -106,7 +106,7 @@ class IOLogisticRegression:
 
             if using_l2:
                 intermed = np.divide(U, np.multiply(np.sqrt(H), ld))
-                self.W = intermed * eta * (i + 1)
+                self.W = intermed * eta
             else:
                 threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
                                        np.zeros(shape=(infeats, outfeats)))

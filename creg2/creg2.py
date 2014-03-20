@@ -20,7 +20,7 @@ parser.add_argument('--dev', action='store_true', help='tx and ty as dev set: us
 parser.add_argument('--iterations', type=int, default=300)
 parser.add_argument('--warm', type=int, default=0)
 parser.add_argument('--loadmodel', type=str, help='load a trained model')
-parser.add_argument('--l1', type=int, help='l1 prior (log10)')
+parser.add_argument('--l1', type=float, help='l1 prior (log10)')
 parser.add_argument('--usingl2', action='store_true', help='use l2 instead of l1')
 args = parser.parse_args()
 
@@ -93,6 +93,7 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
 
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
               warm_start=0, usingl2=args.usingl2):
+    print 'l1: {}'.format(l1)
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
