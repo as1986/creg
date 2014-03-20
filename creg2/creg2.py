@@ -21,6 +21,7 @@ parser.add_argument('--iterations', type=int, default=300)
 parser.add_argument('--warm', type=int, default=0)
 parser.add_argument('--loadmodel', type=str, help='load a trained model')
 parser.add_argument('--l1', type=int, help='l1 prior (log10)')
+parser.add_argument('--usingl2', action='store_true', help='use l2 instead of l1')
 args = parser.parse_args()
 
 features = []
@@ -40,7 +41,7 @@ sys.stderr.write('LABEL-FEATURES: %s\n' % ' '.join(label_dict.get_feature_names(
 out_dim = len(label_dict.get_feature_names())
 
 
-def get_vectorizer(feature_file, bias={'bias':1.0}):
+def get_vectorizer(feature_file, bias={'bias': 1.0}):
     features = []
     for line in open(feature_file):
         (id, xfeats, n) = line.strip().split('\t')
@@ -51,7 +52,7 @@ def get_vectorizer(feature_file, bias={'bias':1.0}):
     return vectorizer
 
 
-def read_features(feature_files, response_files, vectorizer, bias={'bias':1.0}):
+def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
     all_features = []
     all_neighbors = []
     all_responses = []
@@ -91,12 +92,12 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias':1.0}):
 
 
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
-              warm_start=0):
+              warm_start=0, usingl2=args.usingl2):
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
     model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True,
-              load_from=load, warm=warm_start)
+              load_from=load, warm=warm_start, using_l2=usingl2)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -151,8 +152,8 @@ def soft_exact(fname):
 
     cmd = ['python', '~/git/extractor/eval.py', fname]
     results = subprocess.check_output(' '.join(cmd), shell=True)
-        # ExactMatch: 0.420168067227
-        # SoftMatch: 0.529579831933
+    # ExactMatch: 0.420168067227
+    # SoftMatch: 0.529579831933
 
     last_two_lines = results.split('\n')[-3:]
     exact = float(last_two_lines[0].strip().split()[-1])
@@ -187,6 +188,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         # softmatch and exactmatch
         # just in case
         import os
+
         os.system('mkdir -p dev_output')
         dev_output = 'dev_output/dev_output_{}.csv'.format(step)
         write_csv(dev_output, predictions)
@@ -217,7 +219,6 @@ if args.output is not None:
     output_file = args.output
 else:
     output_file = 'output.pred'
-
 
 if args.tx is not None and args.ty is not None:
     import numpy
