@@ -40,17 +40,18 @@ sys.stderr.write('LABEL-FEATURES: %s\n' % ' '.join(label_dict.get_feature_names(
 out_dim = len(label_dict.get_feature_names())
 
 
-def get_vectorizer(feature_file):
+def get_vectorizer(feature_file, bias={'bias':1.0}):
     features = []
     for line in open(feature_file):
         (id, xfeats, n) = line.strip().split('\t')
         features.append(json.loads(xfeats))
+    features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
     vectorizer.fit(features)
     return vectorizer
 
 
-def read_features(feature_files, response_files, vectorizer):
+def read_features(feature_files, response_files, vectorizer, bias={'bias':1.0}):
     all_features = []
     all_neighbors = []
     all_responses = []
@@ -64,7 +65,9 @@ def read_features(feature_files, response_files, vectorizer):
         for line in open(feature_files[idx]):
             (id, xfeats, n) = line.strip().split('\t')
             ids[id] = len(ids)
-            features.append(json.loads(xfeats))
+            loaded_features = json.loads(xfeats)
+            loaded_features.update(bias)
+            features.append(loaded_features)
             neighborhood = json.loads(n)['N']
             if len(neighborhood) == 0:
                 sys.stderr.write('[ERROR] empty neighborhood in line:\n%s' % line)

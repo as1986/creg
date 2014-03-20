@@ -62,7 +62,7 @@ class IOLogisticRegression:
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
-            l1=1e-1, write=True, load_from=None, warm=0):
+            l1=1e-1, write=True, load_from=None, warm=0, using_l2=False):
         self.l1 = l1
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
@@ -87,7 +87,10 @@ class IOLogisticRegression:
             for s in random.sample(range(X.shape[0]), minibatch_size):
                 tiny_loss = self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
                 loss += tiny_loss
-                prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
+                if using_l2:
+                    prior_loss += tiny_loss + self.l1 * np.sum(np.power(self.W, 2))
+                else:
+                    prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
 
             #for k in range(self.n_classes - 1):
             #    offset = (self.n_features + 1) * k
@@ -100,9 +103,13 @@ class IOLogisticRegression:
             G /= minibatch_size
             H += np.square(G)
             U += G
-            threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
-                                   np.zeros(shape=(infeats, outfeats)))
-            self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
+
+            if using_l2:
+                self.W = np.divide(U, np.dot(l1, np.sqrt(H))) * eta * (i + 1)
+            else:
+                threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
+                                       np.zeros(shape=(infeats, outfeats)))
+                self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
             if i % 50 == 0 and write is True:
                 np.save('models/model_state_{}H'.format(i), H)
                 np.save('models/model_state_{}'.format(i), self.W)
