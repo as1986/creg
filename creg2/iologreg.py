@@ -62,7 +62,7 @@ class IOLogisticRegression:
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
-            l1=1e-1, write=True, load_from=None, warm=0, using_l2=False):
+            l1=10e-1, write=True, load_from=None, warm=0, using_l2=False):
         self.l1 = l1
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
