@@ -181,7 +181,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 
         r = numpy.arange(-2, 4, step=0.4)
     else:
-        r = range(-10, 0)
+        r = numpy.arange(-10, 0, step=1.)
     for step in r:
 
         dev_output = 'dev_output/dev_output_{}.csv'.format(step)
