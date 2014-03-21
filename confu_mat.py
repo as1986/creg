@@ -9,7 +9,7 @@ def get_confu_mat(rows):
     label_set = set.union(set(predictions), set(answers))
     indexed_labels = {k: v for v, k in enumerate(label_set)}
     one_row = [1] * len(label_set)
-    table = [one_row for k in range(len(label_set))]
+    table = [list(one_row) for k in range(len(label_set))]
     for (pred, ans, id) in rows[1:]:
         table[indexed_labels[pred]][indexed_labels[ans]] += 1
 
