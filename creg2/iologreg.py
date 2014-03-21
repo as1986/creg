@@ -64,6 +64,7 @@ class IOLogisticRegression:
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
             l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None):
         self.l1 = l1
+        print 'lambda: {}'.format(self.l1)
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
         self.y_feats = y_feats
@@ -73,12 +74,13 @@ class IOLogisticRegression:
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
         U = np.zeros(shape=(infeats, outfeats))
         ld = np.ones(shape=(infeats, outfeats)) * self.l1
-        if using_l2: 
-            bias_mask = np.array((np.vstack([bias] * len(y_feats)) * (1-self.l1))).transpose()
-        else:
-            bias_mask = np.array((np.vstack([bias] * len(y_feats)) * (-self.l1))).transpose()
+        if bias is not None:
+            if using_l2: 
+                bias_mask = ((np.vstack([bias] * outfeats) * (1-self.l1))).transpose()
+            else:
+                bias_mask = ((np.vstack([bias] * outfeats) * (-self.l1))).transpose()
             
-        ld += bias_mask
+            ld += bias_mask
 
         if load_from is not None:
             self.W = np.load(load_from)

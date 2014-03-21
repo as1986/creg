@@ -22,6 +22,7 @@ parser.add_argument('--warm', type=int, default=0)
 parser.add_argument('--loadmodel', type=str, help='load a trained model')
 parser.add_argument('--l1', type=float, help='l1 prior (log10)')
 parser.add_argument('--usingl2', action='store_true', help='use l2 instead of l1')
+parser.add_argument('--bias', action='store_true', help='regularization of bias')
 args = parser.parse_args()
 
 features = []
@@ -46,7 +47,8 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
     for line in open(feature_file):
         (id, xfeats, n) = line.strip().split('\t')
         features.append(json.loads(xfeats))
-    features.append(bias)
+    if not args.bias:
+       features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
     vectorizer.fit(features)
     return vectorizer
@@ -67,7 +69,8 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
             (id, xfeats, n) = line.strip().split('\t')
             ids[id] = len(ids)
             loaded_features = json.loads(xfeats)
-            loaded_features.update(bias)
+            if not args.bias:
+                loaded_features.update(bias)
             features.append(loaded_features)
             neighborhood = json.loads(n)['N']
             if len(neighborhood) == 0:
@@ -98,6 +101,8 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2
     assert len(X) == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
+    if args.bias is True:
+       bias = None
     model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True,
               load_from=load, warm=warm_start, using_l2=usingl2, bias=bias)
     if write_model is not None:
@@ -195,9 +200,9 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         else:
             print 'lambda = {}'.format(step)
 
-        import numpy
+        import numpy,math
 
-        param = numpy.power(10, step)
+        param = math.pow(10, step)
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
                           write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations,
                           warm_start=args.warm,
