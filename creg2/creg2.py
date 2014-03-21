@@ -180,7 +180,6 @@ def write_csv(f_name, preds):
 
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
-    which_dev = []
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
     import numpy
     if args.usingl2:
@@ -200,6 +199,9 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         else:
             print 'lambda = {}'.format(step)
 
+        pid = os.fork()
+        if pid != 0:
+            continue
         import numpy,math
 
         param = math.pow(10, step)
@@ -218,16 +220,13 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         write_csv(dev_output, predictions)
         (soft, exact) = soft_exact(dev_output)
 
-        which_dev.append((step, soft, exact))
-        print which_dev[-1]
-    with open('dev.csv', 'w') as dev_out_fh:
-        import csv
+        with open('dev.csv', 'a') as dev_out_fh:
+            import csv
 
-        w = csv.writer(dev_out_fh)
-        w.writerow(['l1', 'soft', 'exact'])
-        for p in which_dev:
-            w.writerow([p[0], p[1], p[2]])
-    return which_dev
+            w = csv.writer(dev_out_fh)
+            w.writerow([step, soft, exact])
+        exit(0)
+    return
 
 
 training_feat = [x + 'feat' for x in args.training]
@@ -237,7 +236,7 @@ bias_vec = X_dict.transform([{'bias':1.0}]).toarray()
 sys.stderr.write('       rows(X): %d\n' % len(X))
 
 if args.dev:
-    print dev_lambda(args.tx, args.ty, X, Y, N)
+    dev_lambda(args.tx, args.ty, X, Y, N)
     exit()
 
 if args.output is not None:
