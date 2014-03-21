@@ -178,10 +178,9 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
     if args.usingl2:
         import numpy
-
         r = numpy.arange(-2, 4, step=0.4)
     else:
-        r = numpy.arange(-10, 0, step=1.)
+        r = range(-10,0)
     for step in r:
 
         dev_output = 'dev_output/dev_output_{}.csv'.format(step)
