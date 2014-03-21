@@ -189,6 +189,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     for step in r:
 
         dev_output = 'dev_output/dev_output_{}.csv'.format(step)
+        dev_output_pred = 'dev_output/dev_output_{}.pred'.format(step)
 
         # check if we already covered this point
         import os
@@ -209,7 +210,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
                           write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations,
                           warm_start=args.warm,
                           load=args.loadmodel,bias=bias_vec)
-        predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
+        predictions = predict(model, X_dev, Y_dev, N_dev, invlabels, output_file=dev_output_pred)
 
         # softmatch and exactmatch
         # just in case
