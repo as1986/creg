@@ -62,7 +62,7 @@ class IOLogisticRegression:
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
-            l1=2., write=True, load_from=None, warm=0, using_l2=False):
+            l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None):
         self.l1 = l1
         minibatch_size = min(minibatch_size, len(X))
         self.num_labels = num_labels
@@ -73,6 +73,9 @@ class IOLogisticRegression:
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
         U = np.zeros(shape=(infeats, outfeats))
         ld = np.ones(shape=(infeats, outfeats)) * self.l1
+        bias_mask = (bias * X.shape[0]) * (1 - self.l1)
+        ld += bias_mask
+
         if load_from is not None:
             self.W = np.load(load_from)
             U = np.load(load_from[:load_from.find('.npy')] + 'U.npy')

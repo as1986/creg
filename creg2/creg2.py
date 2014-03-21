@@ -92,7 +92,8 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
 
 
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
-              warm_start=0, usingl2=args.usingl2):
+              warm_start=0, usingl2=args.usingl2, bias = None):
+
     print 'l1: {}'.format(l1)
     assert len(X) == len(N)
     assert len(Y) == len(X)
@@ -200,7 +201,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
                           write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations,
                           warm_start=args.warm,
-                          load=args.loadmodel)
+                          load=args.loadmodel,bias=bias_vec)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels)
 
         # softmatch and exactmatch
@@ -227,6 +228,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 training_feat = [x + 'feat' for x in args.training]
 training_resp = [x + 'resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
+bias_vec = X_dict.transform([{'bias':1.0}]).toarray()
 sys.stderr.write('       rows(X): %d\n' % len(X))
 
 if args.dev:
@@ -242,7 +244,7 @@ if args.tx is not None and args.ty is not None:
     import numpy
 
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
-                      iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1))
+                      iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1),bias=bias_vec)
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
     prediction = predict(model, tX, tY, tN, invlabels, output_file)
@@ -258,7 +260,7 @@ else:
         X_train, X_test = X[train], X[test]
         Y_train, Y_test = [Y[i] for i in train], [Y[i] for i in test]
         N_train, N_test = [N[i] for i in train], [N[i] for i in test]
-        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'cv_model_{}'.format(idx))
+        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'cv_model_{}'.format(idx),bias=bias_vec)
         prediction.extend(zip(predict(model, X_test, Y_test, N_test, invlabels), test))
 
     with open(output_file, 'w') as outputFile:
