@@ -99,7 +99,7 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2
     assert len(Y) == len(X)
     model = IOLogisticRegression()
     model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True,
-              load_from=load, warm=warm_start, using_l2=usingl2)
+              load_from=load, warm=warm_start, using_l2=usingl2, bias=bias)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -177,11 +177,11 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     which_dev = []
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
+    import numpy
     if args.usingl2:
-        import numpy
-        r = numpy.arange(-2, 4, step=0.4)
+        r = numpy.arange(-2, 4, step=1)
     else:
-        r = range(-10,0)
+        r = numpy.arange(-10, 0, step=1.7)
     for step in r:
 
         dev_output = 'dev_output/dev_output_{}.csv'.format(step)
@@ -243,7 +243,6 @@ else:
 if args.tx is not None and args.ty is not None:
     import numpy
 
-    print X_dict.get_feature_names()
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
                       iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1),bias=bias_vec)
 

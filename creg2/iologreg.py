@@ -73,7 +73,11 @@ class IOLogisticRegression:
         H = np.ones(shape=(infeats, outfeats)) * 1e-300
         U = np.zeros(shape=(infeats, outfeats))
         ld = np.ones(shape=(infeats, outfeats)) * self.l1
-        bias_mask = (bias * X.shape[0]) * (1 - self.l1)
+        if using_l2: 
+            bias_mask = np.array((np.vstack([bias] * len(y_feats)) * (1-self.l1))).transpose()
+        else:
+            bias_mask = np.array((np.vstack([bias] * len(y_feats)) * (-self.l1))).transpose()
+            
         ld += bias_mask
 
         if load_from is not None:
