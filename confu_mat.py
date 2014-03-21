@@ -15,7 +15,7 @@ def get_confu_mat(rows):
 
     print ' \t' + ' '.join([str(x) for x in range(len(label_set))])
     for idx, table_row in enumerate(table):
-        print '{}\t'.format(idx) + ' '.join(table_row)
+        print '{}\t'.format(idx) + ' '.join([str(x) for x in table_row])
 
     print indexed_labels
 
