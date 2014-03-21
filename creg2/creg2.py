@@ -243,7 +243,7 @@ else:
 if args.tx is not None and args.ty is not None:
     import numpy
 
-    print bias_vec
+    print X_dict.get_feature_names()
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
                       iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1),bias=bias_vec)
 
