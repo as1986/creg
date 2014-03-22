@@ -21,10 +21,10 @@ def get_confu_mat(rows):
 
         writer = csv.writer(cf)
         header_row = ['X'] + [inversed[x] for x in range(len(label_set))]
-        writer.write(header_row)
+        writer.writerow(header_row)
         for idx, table_row in enumerate(table):
             row = ['{}'.format(inversed[idx])] + table_row
-            writer.write(row)
+            writer.writerow(row)
 
     print indexed_labels
 
