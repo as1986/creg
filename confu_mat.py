@@ -16,6 +16,22 @@ def get_confu_mat(rows):
     for (pred, ans, id) in rows[1:]:
         table[indexed_labels[pred]][indexed_labels[ans]] += 1
 
+    for ind in range(len(label_set)):
+        def f1(a, b):
+            return 2 * (a * b) / (a + b + 1e-300)
+
+        label = inversed[ind]
+        tt = float(table[ind][ind])
+        tttf = sum(table[ind])
+        ttft = sum([table[x][ind] for x in range(len(label_set))])
+        print 'label {}:'.format(label)
+        print 'precision: {}'.format(tt / tttf)
+        print 'recall: {}'.format(tt / ttft)
+        print 'f1: {}'.format(f1(tt / tttf, tt / ttft))
+
+    if '--nowrite' in sys.argv:
+        return
+
     with open(sys.argv[1] + '.cm.csv', 'w') as cf:
         import csv
 
