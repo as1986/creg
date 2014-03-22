@@ -18,12 +18,12 @@ def get_confu_mat(rows):
 
     for ind in range(len(label_set)):
         def f1(a, b):
-            return 2 * (a * b) / (a + b + 1e-300)
+            return 2 * (a * b) / (a + b)
 
         label = inversed[ind]
         tt = float(table[ind][ind])
-        tttf = sum(table[ind])
-        ttft = sum([table[x][ind] for x in range(len(label_set))])
+        tttf = sum(table[ind]) + 1e-300
+        ttft = sum([table[x][ind] for x in range(len(label_set))]) + 1e-300
         print 'label {}:'.format(label)
         print 'precision: {}'.format(tt / tttf)
         print 'recall: {}'.format(tt / ttft)
