@@ -58,29 +58,29 @@ class IOLogisticRegression:
         loss = -(log_probs[y] - z)
         for yi in n:
             delta = math.exp(log_probs[yi] - z) - (yi == y)
-            G += np.outer(x, y_feats[yi]) * delta
+            G += x.transpose() * y_feats[yi] * delta
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
             l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None):
         self.l1 = l1
         print 'lambda: {}'.format(self.l1)
-        minibatch_size = min(minibatch_size, len(X))
+        minibatch_size = min(minibatch_size, X.shape[0])
         self.num_labels = num_labels
         self.y_feats = y_feats
-        self.W = np.zeros(shape=(infeats, outfeats))
+        self.W = np.zeros(shape=(infeats, outfeats)).tocsr()
 
-        G = np.zeros(shape=(infeats, outfeats))
-        H = np.ones(shape=(infeats, outfeats)) * 1e-300
-        U = np.zeros(shape=(infeats, outfeats))
-        ld = np.ones(shape=(infeats, outfeats)) * self.l1
+        G = np.zeros(shape=(infeats, outfeats)).tocsr()
+        H = (np.ones(shape=(infeats, outfeats)) * 1e-300).tocsr()
+        U = np.zeros(shape=(infeats, outfeats)).tocsr()
+        ld = (np.ones(shape=(infeats, outfeats)) * self.l1).tocsr()
         if bias is not None:
             if using_l2: 
                 bias_mask = ((np.vstack([bias] * outfeats) * (1-self.l1))).transpose()
             else:
                 bias_mask = ((np.vstack([bias] * outfeats) * (-self.l1))).transpose()
             
-            ld += bias_mask
+            ld = ld + bias_mask
 
         if load_from is not None:
             self.W = np.load(load_from)
@@ -97,7 +97,7 @@ class IOLogisticRegression:
                 tiny_loss = self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
                 loss += tiny_loss
                 if using_l2:
-                    prior_loss += tiny_loss + self.l1 * np.sum(np.multiply(self.W, self.W))
+                    prior_loss += tiny_loss + self.l1 * (self.W * self.W).sum()
                 else:
                     prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
 
@@ -109,12 +109,12 @@ class IOLogisticRegression:
 
             sys.stderr.write('  Loss = %f\n' % loss)
             sys.stderr.write('  Prior Loss = %f\n' % prior_loss)
-            G /= minibatch_size
-            H += np.square(G)
-            U += G
+            G = G/ minibatch_size
+            H = H + np.square(G)
+            U = U + G
 
             if using_l2:
-                intermed = np.divide(-U, np.multiply(np.sqrt(H), ld))
+                intermed = -U / (np.sqrt(H).multiply(ld))
                 self.W = intermed * eta
             else:
                 threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
@@ -130,7 +130,7 @@ class IOLogisticRegression:
     def predict_(self, x, n, probs):
         probs.fill(0.0)
         z = -INFINITY
-        xw = x.dot(self.W)
+        xw = x.dot(self.W.todense())
         for y in n:
             u = xw.dot(self.y_feats[y])
             probs[y] = u

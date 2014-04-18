@@ -35,7 +35,7 @@ for line in open(args.label):
     labels[label] = len(labels)
     features.append(json.loads(f))
 label_dict = feature_extraction.DictVectorizer()
-label_features = label_dict.fit_transform(features).toarray()
+label_features = label_dict.fit_transform(features).tocsr()
 
 sys.stderr.write('        LABELS: %s\n' % ' '.join(labels.keys()))
 sys.stderr.write('LABEL-FEATURES: %s\n' % ' '.join(label_dict.get_feature_names()))
@@ -90,7 +90,7 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
         all_responses.extend(responses)
     assert len(all_features) == len(all_neighbors) == len(all_responses)
     print len(all_features)
-    all_features = vectorizer.transform(all_features).toarray()
+    all_features = vectorizer.transform(all_features).tocsr()
     return (all_features, all_responses, all_neighbors)
 
 
