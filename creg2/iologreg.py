@@ -122,7 +122,7 @@ class IOLogisticRegression:
             if using_l2:
                 Hsqrt = H.copy()
                 Hsqrt.data **= 0.5
-                Hsqrt = - np.multiply(Hsqrt.todense(),ld)
+                Hsqrt = - Hsqrt.tolil().multiply(ld)
                 intermed = U / csr_matrix(Hsqrt)
                 self.W = intermed * eta
             else:
