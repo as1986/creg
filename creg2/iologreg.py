@@ -2,6 +2,7 @@ import numpy as np
 import random
 import math
 import sys
+from scipy.sparse import *
 
 INFINITY = float('inf')
 
@@ -68,12 +69,12 @@ class IOLogisticRegression:
         minibatch_size = min(minibatch_size, X.shape[0])
         self.num_labels = num_labels
         self.y_feats = y_feats
-        self.W = np.zeros(shape=(infeats, outfeats)).tocsr()
+        self.W = csr_matrix(np.zeros(shape=(infeats, outfeats)))
 
-        G = np.zeros(shape=(infeats, outfeats)).tocsr()
-        H = (np.ones(shape=(infeats, outfeats)) * 1e-300).tocsr()
-        U = np.zeros(shape=(infeats, outfeats)).tocsr()
-        ld = (np.ones(shape=(infeats, outfeats)) * self.l1).tocsr()
+        G = csr_matrix(np.zeros(shape=(infeats, outfeats)))
+        H = csr_matrix((np.ones(shape=(infeats, outfeats)) * 1e-300))
+        U = csr_matrix(np.zeros(shape=(infeats, outfeats)))
+        ld = csr_matrix(np.ones(shape=(infeats, outfeats)) * self.l1)
         if bias is not None:
             if using_l2: 
                 bias_mask = ((np.vstack([bias] * outfeats) * (1-self.l1))).transpose()
