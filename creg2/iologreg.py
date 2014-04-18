@@ -58,7 +58,7 @@ class IOLogisticRegression:
         loss = -(log_probs[y] - z)
         for yi in n:
             delta = math.exp(log_probs[yi] - z) - (yi == y)
-            G += x.transpose() * y_feats[yi] * delta
+            G = G +  (x.T * y_feats[yi]) * delta
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
@@ -97,7 +97,7 @@ class IOLogisticRegression:
                 tiny_loss = self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
                 loss += tiny_loss
                 if using_l2:
-                    prior_loss += tiny_loss + self.l1 * (self.W * self.W).sum()
+                    prior_loss += tiny_loss + self.l1 * (self.W.multiply(self.W)).sum()
                 else:
                     prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
 
