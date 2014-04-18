@@ -103,7 +103,10 @@ class IOLogisticRegression:
                 if using_l2:
                     prior_loss += tiny_loss + self.l1 * (self.W.multiply(self.W)).sum()
                 else:
-                    prior_loss += (tiny_loss + self.l1 * np.sum(np.absolute(self.W)))
+                    W_copy = W.copy()
+                    W_copy.data = np.absolute(W_copy.data)
+
+                    prior_loss += (tiny_loss + self.l1 * W_copy.sum())
 
             #for k in range(self.n_classes - 1):
             #    offset = (self.n_features + 1) * k
@@ -126,9 +129,19 @@ class IOLogisticRegression:
                 intermed = U / csr_matrix(Hsqrt)
                 self.W = intermed * eta
             else:
-                threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
-                                       np.zeros(shape=(infeats, outfeats)))
-                self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
+                U_copy = U.copy()
+                U_copy.data = np.absolute(U_copy.data) / (i+1)
+                U_copy = U_copy - ld
+                U_copy.data = np.maximum(U_copy.data, 0)
+                threshold = U_copy
+                U_sign = U.copy()
+                U_sign.data = - np.sign(U_sign.data)
+                Hsqrt = H.copy()
+                Hsqrt.data **= 0.5 * eta * (i+1)
+                self.W = U_sign.multiply(threshold) / Hsqrt
+                # threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
+                #                        np.zeros(shape=(infeats, outfeats)))
+                # self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
             if i % 50 == 0 and write is True:
                 np.save('models/model_state_{}H'.format(i), H)
                 np.save('models/model_state_{}'.format(i), self.W)
