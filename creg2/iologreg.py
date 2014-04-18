@@ -49,7 +49,7 @@ class IOLogisticRegression:
             # print 'w: {}, {}'.format(W, len(W))
             # print 'xw: {}'.format(xw)
             # print 'lbl features: {}, {}'.format(y_feats[yi], len(y_feats[yi]))
-            u = xw.dot(y_feats[yi])
+            u = (xw * y_feats[yi].T)[0,0]
             # print 'u: {}, {}'.format(u, len(u))
             log_probs[yi] = u
             z = logadd(z, u)
