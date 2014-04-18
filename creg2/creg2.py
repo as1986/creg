@@ -97,7 +97,7 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2
               warm_start=0, usingl2=args.usingl2, bias = None):
 
     print 'l1: {}'.format(l1)
-    assert len(X) == len(N)
+    assert X.shape[0] == len(N)
     assert len(Y) == len(X)
     model = IOLogisticRegression()
     if args.bias is True:
