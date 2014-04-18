@@ -1,7 +1,5 @@
-import numpy as np
 import random
 import math
-import sys
 from scipy.sparse import *
 
 INFINITY = float('inf')
@@ -38,7 +36,7 @@ class IOLogisticRegression:
         self.l1 = l1
         self.l2 = l2
 
-    def gradient(self, x, n, y, y_feats, W, G):
+    def gradient(self, x, n, y, y_feats, W, infeats, outfeats):
         z = -INFINITY
         log_probs = np.zeros(self.num_labels)
         xw = x.dot(W)
@@ -57,9 +55,10 @@ class IOLogisticRegression:
             print '[ERROR] for training instance', x, 'gold label', y, 'not found in neighborhood', n
             raise Exception
         loss = -(log_probs[y] - z)
+        G = csr_matrix((infeats, outfeats))
         for yi in n:
             delta = math.exp(log_probs[yi] - z) - (yi == y)
-            G = G +  (x.T * y_feats[yi]) * delta
+            G = G + (x.T * y_feats[yi]) * delta
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
@@ -76,11 +75,11 @@ class IOLogisticRegression:
         U = csr_matrix(np.zeros(shape=(infeats, outfeats)))
         ld = csr_matrix(np.ones(shape=(infeats, outfeats)) * self.l1)
         if bias is not None:
-            if using_l2: 
-                bias_mask = ((np.vstack([bias] * outfeats) * (1-self.l1))).transpose()
+            if using_l2:
+                bias_mask = ((np.vstack([bias] * outfeats) * (1 - self.l1))).transpose()
             else:
                 bias_mask = ((np.vstack([bias] * outfeats) * (-self.l1))).transpose()
-            
+
             ld = ld + bias_mask
 
         if load_from is not None:
@@ -91,12 +90,13 @@ class IOLogisticRegression:
         loss_history = []
         for i in range(warm, iterations + warm):
             sys.stderr.write('Iteration: %d\n' % i)
-            G.fill(0.0)
+
             loss = 0
             prior_loss = 0
             for s in random.sample(range(X.shape[0]), minibatch_size):
-                tiny_loss = self.gradient(X[s], N[s], Y[s], y_feats, self.W, G)
+                tiny_loss, thisG = self.gradient(X[s], N[s], Y[s], y_feats, self.W, infeats, outfeats)
                 loss += tiny_loss
+                G = G + thisG
                 if using_l2:
                     prior_loss += tiny_loss + self.l1 * (self.W.multiply(self.W)).sum()
                 else:
@@ -110,7 +110,7 @@ class IOLogisticRegression:
 
             sys.stderr.write('  Loss = %f\n' % loss)
             sys.stderr.write('  Prior Loss = %f\n' % prior_loss)
-            G = G/ minibatch_size
+            G = G / minibatch_size
             H = H + np.square(G)
             U = U + G
 
