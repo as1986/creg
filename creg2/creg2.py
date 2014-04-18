@@ -264,7 +264,7 @@ else:
         X_train, X_test = X[train], X[test]
         Y_train, Y_test = [Y[i] for i in train], [Y[i] for i in test]
         N_train, N_test = [N[i] for i in train], [N[i] for i in test]
-        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'cv_model_{}'.format(idx),bias=bias_vec)
+        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'cv_model_{}'.format(idx),bias=bias_vec, iterations=args.iterations)
         prediction.extend(zip(predict(model, X_test, Y_test, N_test, invlabels), test))
 
     with open(output_file, 'w') as outputFile:

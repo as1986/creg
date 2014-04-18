@@ -61,7 +61,7 @@ class IOLogisticRegression:
         for yi in n:
             delta = math.exp(log_probs[yi] - z) - (yi == y)
             G = G + (x.T * y_feats[yi]) * delta
-        return loss
+        return loss, G
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
             l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None):
@@ -90,6 +90,7 @@ class IOLogisticRegression:
             H = np.load(load_from[:load_from.find('.npy')] + 'H.npy')
             G = np.load(load_from[:load_from.find('.npy')] + 'G.npy')
         loss_history = []
+        print '# of iterations: {}'.format(iterations)
         for i in range(warm, iterations + warm):
             sys.stderr.write('Iteration: %d\n' % i)
 
@@ -113,11 +114,16 @@ class IOLogisticRegression:
             sys.stderr.write('  Loss = %f\n' % loss)
             sys.stderr.write('  Prior Loss = %f\n' % prior_loss)
             G = G / minibatch_size
-            H = H + np.square(G)
+            Gsqr = G.copy()
+            Gsqr.data **=2
+            H = H + Gsqr
             U = U + G
 
             if using_l2:
-                intermed = -U / (np.sqrt(H).multiply(ld))
+                Hsqrt = H.copy()
+                Hsqrt.data **= 0.5
+                Hsqrt = - np.multiply(Hsqrt.todense(),ld)
+                intermed = U / csr_matrix(Hsqrt)
                 self.W = intermed * eta
             else:
                 threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
@@ -133,20 +139,20 @@ class IOLogisticRegression:
     def predict_(self, x, n, probs):
         probs.fill(0.0)
         z = -INFINITY
-        xw = x.dot(self.W.todense())
+        xw = x.dot(self.W)
         for y in n:
-            u = xw.dot(self.y_feats[y])
+            u = (xw * self.y_feats[y].T)[0,0]
             probs[y] = u
             z = logadd(z, u)
         for y in n:
             probs[y] = math.exp(probs[y] - z)
 
     def predict(self, X, N):
-        post = np.zeros(shape=(len(X), self.num_labels))
+        post = np.zeros(shape=(X.shape[0], self.num_labels))
         return post
 
     def predict_proba(self, X, N):
-        post = np.zeros(shape=(len(X), self.num_labels))
+        post = np.zeros(shape=(X.shape[0], self.num_labels))
         for (x, n, p) in zip(X, N, post):
             self.predict_(x, n, p)
         return post
