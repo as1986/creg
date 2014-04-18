@@ -35,6 +35,7 @@ for line in open(args.label):
     features.append(json.loads(f))
 label_dict = feature_extraction.DictVectorizer()
 label_features = label_dict.fit_transform(features).tocsr()
+features = None
 
 sys.stderr.write('        LABELS: %s\n' % ' '.join(labels.keys()))
 sys.stderr.write('LABEL-FEATURES: %s\n' % ' '.join(label_dict.get_feature_names()))
