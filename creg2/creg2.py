@@ -233,7 +233,7 @@ training_feat = [x + 'feat' for x in args.training]
 training_resp = [x + 'resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
 bias_vec = X_dict.transform([{'bias':1.0}]).toarray()
-sys.stderr.write('       rows(X): %d\n' % len(X))
+sys.stderr.write('       rows(X): %d\n' % X.shape[0])
 
 if args.dev:
     dev_lambda(args.tx, args.ty, X, Y, N)
