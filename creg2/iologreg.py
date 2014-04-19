@@ -103,7 +103,7 @@ class IOLogisticRegression:
                 if using_l2:
                     prior_loss += tiny_loss + self.l1 * (self.W.multiply(self.W)).sum()
                 else:
-                    W_copy = W.copy()
+                    W_copy = self.W.copy()
                     W_copy.data = np.absolute(W_copy.data)
 
                     prior_loss += (tiny_loss + self.l1 * W_copy.sum())
@@ -137,8 +137,9 @@ class IOLogisticRegression:
                 U_sign = U.copy()
                 U_sign.data = - np.sign(U_sign.data)
                 Hsqrt = H.copy()
-                Hsqrt.data **= 0.5 * eta * (i+1)
-                self.W = U_sign.multiply(threshold) / Hsqrt
+                Hsqrt.data **= 0.5
+                self.W = csr_matrix(U_sign.multiply(threshold)) / Hsqrt
+                self.W = self.W * (eta * (i+1))
                 # threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
                 #                        np.zeros(shape=(infeats, outfeats)))
                 # self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
@@ -147,6 +148,11 @@ class IOLogisticRegression:
                 np.save('models/model_state_{}'.format(i), self.W)
                 np.save('models/model_state_{}U'.format(i), U)
                 np.save('models/model_state_{}G'.format(i), G)
+            H.eliminate_zeros()
+            self.W.eliminate_zeros()
+            U.eliminate_zeros()
+            G.eliminate_zeros()
+            print 'usage: H: {}, W: {}, U: {}, G: {}'.format(H.data.nbytes, self.W.data.nbytes, U.data.nbytes, G.data.nbytes)
         return self
 
     def predict_(self, x, n, probs):
