@@ -11,6 +11,8 @@ INFINITY = float('inf')
 
 def maximum(A, B):
     BisBigger = A - B
+    if BisBigger.data.size == 0:
+       return A.copy()
     BisBigger.data = np.where(BisBigger.data < 0, 1, 0)
     return A - A.multiply(BisBigger) + B.multiply(BisBigger)
 
