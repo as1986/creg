@@ -9,12 +9,16 @@ import numpy as np
 INFINITY = float('inf')
 
 
-def maximum(A, B):
-    BisBigger = A - B
-    if BisBigger.data.size == 0:
-       return A.copy()
-    BisBigger.data = np.where(BisBigger.data < 0, 1, 0)
-    return A - A.multiply(BisBigger) + B.multiply(BisBigger)
+def maximum_zero(A):
+    i = csr_matrix(A)
+    BisBigger = i.copy()
+    BisBigger.data = np.where(BisBigger.data > 0, 1, 0)
+    return i.multiply(BisBigger)
+
+def absolute(A):
+    BisBigger = A.copy()
+    BisBigger.data = np.where(BisBigger.data > 0, 1, -1)
+    return A.multiply(BisBigger)
 
 
 def logadd(a, b):
@@ -138,12 +142,10 @@ class IOLogisticRegression:
                 intermed = U / Hsqrt
                 self.W = intermed * eta
             else:
-                U_copy = U.copy()
-                U_copy.data = np.absolute(U_copy.data) / (i + 1)
-                U_copy = U_copy - ld
-                threshold = maximum(U_copy, csr_matrix((infeats, outfeats)))
+                U_copy = absolute(U)/(i+1) - ld
+                threshold = maximum_zero(U_copy)
 
-                self.W = U.sign().multiply(threshold) / H.sqrt()
+                self.W = U.sign().multiply(threshold) / -H.sqrt()
                 self.W = self.W * (eta * (i + 1))
                 # threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
                 #                        np.zeros(shape=(infeats, outfeats)))
