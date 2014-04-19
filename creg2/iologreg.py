@@ -1,10 +1,18 @@
 import random
 import math
 from scipy.sparse import *
-import numpy as np
 import sys
 
+import numpy as np
+
+
 INFINITY = float('inf')
+
+
+def maximum(A, B):
+    BisBigger = A - B
+    BisBigger.data = np.where(BisBigger.data < 0, 1, 0)
+    return A - A.multiply(BisBigger) + B.multiply(BisBigger)
 
 
 def logadd(a, b):
@@ -49,7 +57,7 @@ class IOLogisticRegression:
             # print 'w: {}, {}'.format(W, len(W))
             # print 'xw: {}'.format(xw)
             # print 'lbl features: {}, {}'.format(y_feats[yi], len(y_feats[yi]))
-            u = (xw * y_feats[yi].T)[0,0]
+            u = (xw * y_feats[yi].T)[0, 0]
             # print 'u: {}, {}'.format(u, len(u))
             log_probs[yi] = u
             z = logadd(z, u)
@@ -118,28 +126,23 @@ class IOLogisticRegression:
             sys.stderr.write('  Prior Loss = %f\n' % prior_loss)
             G = G / minibatch_size
             Gsqr = G.copy()
-            Gsqr.data **=2
+            Gsqr.data **= 2
             H = H + Gsqr
             U = U + G
 
             if using_l2:
-                Hsqrt = H.copy()
-                Hsqrt.data **= 0.5
-                Hsqrt = - Hsqrt.tolil().multiply(ld)
-                intermed = U / csr_matrix(Hsqrt)
+
+                Hsqrt = - H.sqrt().multiply(ld)
+                intermed = U / Hsqrt
                 self.W = intermed * eta
             else:
                 U_copy = U.copy()
-                U_copy.data = np.absolute(U_copy.data) / (i+1)
+                U_copy.data = np.absolute(U_copy.data) / (i + 1)
                 U_copy = U_copy - ld
-                U_copy.data = np.maximum(U_copy.data, 0)
-                threshold = U_copy
-                U_sign = U.copy()
-                U_sign.data = - np.sign(U_sign.data)
-                Hsqrt = H.copy()
-                Hsqrt.data **= 0.5
-                self.W = csr_matrix(U_sign.multiply(threshold)) / Hsqrt
-                self.W = self.W * (eta * (i+1))
+                threshold = maximum(U_copy, csr_matrix((infeats, outfeats)))
+
+                self.W = U.sign().multiply(threshold) / H.sqrt()
+                self.W = self.W * (eta * (i + 1))
                 # threshold = np.maximum(np.subtract(np.divide(np.absolute(U), i + 1), ld),
                 #                        np.zeros(shape=(infeats, outfeats)))
                 # self.W = np.divide(np.multiply(-np.sign(U), threshold), np.sqrt(H)) * eta * (i + 1)
@@ -152,7 +155,8 @@ class IOLogisticRegression:
             self.W.eliminate_zeros()
             U.eliminate_zeros()
             G.eliminate_zeros()
-            print 'usage: H: {}, W: {}, U: {}, G: {}'.format(H.data.nbytes, self.W.data.nbytes, U.data.nbytes, G.data.nbytes)
+            print 'usage: H: {}, W: {}, U: {}, G: {}'.format(H.data.nbytes, self.W.data.nbytes, U.data.nbytes,
+                                                             G.data.nbytes)
         return self
 
     def predict_(self, x, n, probs):
@@ -160,7 +164,7 @@ class IOLogisticRegression:
         z = -INFINITY
         xw = x.dot(self.W)
         for y in n:
-            u = (xw * self.y_feats[y].T)[0,0]
+            u = (xw * self.y_feats[y].T)[0, 0]
             probs[y] = u
             z = logadd(z, u)
         for y in n:
