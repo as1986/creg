@@ -3,7 +3,6 @@ import json
 import argparse
 
 from sklearn import feature_extraction
-
 from iologreg import IOLogisticRegression
 
 
@@ -37,6 +36,10 @@ label_dict = feature_extraction.DictVectorizer()
 label_features = label_dict.fit_transform(features).tocsr()
 features = None
 
+import gc
+
+gc.collect()
+
 sys.stderr.write('        LABELS: %s\n' % ' '.join(labels.keys()))
 sys.stderr.write('LABEL-FEATURES: %s\n' % ' '.join(label_dict.get_feature_names()))
 out_dim = len(label_dict.get_feature_names())
@@ -48,9 +51,11 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
         (id, xfeats, n) = line.strip().split('\t')
         features.append(json.loads(xfeats))
     if not args.bias:
-       features.append(bias)
+        features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
     vectorizer.fit(features)
+    features = None
+    gc.collect()
     return vectorizer
 
 
@@ -95,14 +100,13 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
 
 
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
-              warm_start=0, usingl2=args.usingl2, bias = None):
-
+              warm_start=0, usingl2=args.usingl2, bias=None):
     print 'l1: {}'.format(l1)
     assert X.shape[0] == len(N)
     assert len(Y) == X.shape[0]
     model = IOLogisticRegression()
     if args.bias is True:
-       bias = None
+        bias = None
     model.fit(in_dim, out_dim, X, N, Y, lbl_feat, len(lbl), iterations=iterations, minibatch_size=20, l1=l1, write=True,
               load_from=load, warm=warm_start, using_l2=usingl2, bias=bias)
     if write_model is not None:
@@ -181,7 +185,7 @@ def write_csv(f_name, preds):
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
-    import numpy
+
     if args.usingl2:
         r = numpy.arange(-2, 4, step=1)
     else:
@@ -203,13 +207,13 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         pid = os.fork()
         if pid != 0:
             continue
-        import numpy,math
+        import numpy, math
 
         param = math.pow(10, step)
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
                           write_model='dev_model_{}'.format(step), l1=param, iterations=args.iterations,
                           warm_start=args.warm,
-                          load=args.loadmodel,bias=bias_vec)
+                          load=args.loadmodel, bias=bias_vec)
         predictions = predict(model, X_dev, Y_dev, N_dev, invlabels, output_file=dev_output_pred)
 
         # softmatch and exactmatch
@@ -233,7 +237,7 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 training_feat = [x + 'feat' for x in args.training]
 training_resp = [x + 'resp' for x in args.training]
 (X, Y, N) = read_features(training_feat, training_resp, X_dict)
-bias_vec = X_dict.transform([{'bias':1.0}]).toarray()
+bias_vec = X_dict.transform([{'bias': 1.0}]).toarray()
 sys.stderr.write('       rows(X): %d\n' % X.shape[0])
 
 if args.dev:
@@ -249,9 +253,10 @@ if args.tx is not None and args.ty is not None:
     import numpy
 
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
-                      iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1),bias=bias_vec)
+                      iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1), bias=bias_vec)
 
     (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
+    gc.collect()
     prediction = predict(model, tX, tY, tN, invlabels, output_file)
     write_csv(output_file + '.csv', prediction)
 else:
@@ -265,7 +270,8 @@ else:
         X_train, X_test = X[train], X[test]
         Y_train, Y_test = [Y[i] for i in train], [Y[i] for i in test]
         N_train, N_test = [N[i] for i in train], [N[i] for i in test]
-        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'cv_model_{}'.format(idx),bias=bias_vec, iterations=args.iterations)
+        model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train, 'cv_model_{}'.format(idx),
+                          bias=bias_vec, iterations=args.iterations)
         prediction.extend(zip(predict(model, X_test, Y_test, N_test, invlabels), test))
 
     with open(output_file, 'w') as outputFile:
