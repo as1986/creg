@@ -234,9 +234,13 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     return
 
 
-training_feat = [x + 'feat' for x in args.training]
-training_resp = [x + 'resp' for x in args.training]
-(X, Y, N) = read_features(training_feat, training_resp, X_dict)
+def get_training(training_list):
+    training_feat = [x + 'feat' for x in training_list]
+    training_resp = [x + 'resp' for x in training_list]
+    return read_features(training_feat, training_resp, X_dict)
+
+
+(X, Y, N) = get_training(args.training)
 bias_vec = X_dict.transform([{'bias': 1.0}]).toarray()
 sys.stderr.write('       rows(X): %d\n' % X.shape[0])
 
