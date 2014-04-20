@@ -159,8 +159,12 @@ class IOLogisticRegression:
             self.W.eliminate_zeros()
             U.eliminate_zeros()
             G.eliminate_zeros()
-            print 'usage: H: {}, W: {}, U: {}, G: {}'.format(H.data.nbytes, self.W.data.nbytes, U.data.nbytes,
-                                                             G.data.nbytes)
+
+            def ssize(M):
+                return M.data.nbytes + M.indptr.nbytes + M.indices.nbytes
+
+            print 'usage: H: {}, W: {}, U: {}, G: {}'.format(ssize(H), ssize(self.W), ssize(U),
+                                                             ssize(G))
         return self
 
     def predict_(self, x, n, probs):
