@@ -155,10 +155,6 @@ class IOLogisticRegression:
                 np.save('models/model_state_{}'.format(i), self.W)
                 np.save('models/model_state_{}U'.format(i), U)
                 np.save('models/model_state_{}G'.format(i), G)
-            H.eliminate_zeros()
-            self.W.eliminate_zeros()
-            U.eliminate_zeros()
-            G.eliminate_zeros()
 
             def ssize(M):
                 return M.data.nbytes + M.indptr.nbytes + M.indices.nbytes
