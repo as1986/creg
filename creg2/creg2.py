@@ -47,9 +47,10 @@ out_dim = len(label_dict.get_feature_names())
 
 def get_vectorizer(feature_file, bias={'bias': 1.0}):
     features = []
-    for line in open(feature_file):
-        (id, xfeats, n) = line.strip().split('\t')
-        features.append(json.loads(xfeats))
+    with open(feature_file) as fh:
+        for line in fh:
+            (id, xfeats, n) = line.strip().split('\t')
+            features.append(json.loads(xfeats))
     if not args.bias:
         features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
@@ -70,21 +71,22 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
         features = []
         neighbors = []
         # read training instances and neighborhoods
-        for line in open(feature_files[idx]):
-            (id, xfeats, n) = line.strip().split('\t')
-            ids[id] = len(ids)
-            loaded_features = json.loads(xfeats)
-            if not args.bias:
-                loaded_features.update(bias)
-            features.append(loaded_features)
-            neighborhood = json.loads(n)['N']
-            if len(neighborhood) == 0:
-                sys.stderr.write('[ERROR] empty neighborhood in line:\n%s' % line)
-                sys.exit(1)
-            if len(neighborhood) == 1:
-                sys.stderr.write('[WARNING] neighborhood for id="%s" is singleton: %s\n' % (id, str(neighborhood)))
-            n = [labels[x] for x in neighborhood]
-            neighbors.append(n)
+        with open(feature_files[idx]) as fh:
+            for line in fh:
+                (id, xfeats, n) = line.strip().split('\t')
+                ids[id] = len(ids)
+                loaded_features = json.loads(xfeats)
+                if not args.bias:
+                    loaded_features.update(bias)
+                features.append(loaded_features)
+                neighborhood = json.loads(n)['N']
+                if len(neighborhood) == 0:
+                    sys.stderr.write('[ERROR] empty neighborhood in line:\n%s' % line)
+                    sys.exit(1)
+                if len(neighborhood) == 1:
+                    sys.stderr.write('[WARNING] neighborhood for id="%s" is singleton: %s\n' % (id, str(neighborhood)))
+                n = [labels[x] for x in neighborhood]
+                neighbors.append(n)
         # read gold labels
         responses = [0 for x in xrange(len(features))]
         for line in open(response_files[idx]):
