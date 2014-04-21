@@ -105,24 +105,32 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
 def read_helper(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
     import cPickle as pickle
     import os
+    import scipy.io
 
-    pid = os.fork()
     import tempfile
 
     fh, fname = tempfile.mkstemp()
+    fhX, fnameX = tempfile.mkstemp()
+    pid = os.fork()
     if pid == 0:
         (X, Y, N) = read_features(feature_files, response_files, vectorizer, bias)
-        pickle.dump(X, fh, protocol=pickle.HIGHEST_PROTOCOL)
-        pickle.dump(Y, fh, protocol=pickle.HIGHEST_PROTOCOL)
-        pickle.dump(N, fh, protocol=pickle.HIGHEST_PROTOCOL)
-        fh.close()
+        f = os.fdopen(fh,'wb')
+        pickle.dump(Y, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(N, f, protocol=pickle.HIGHEST_PROTOCOL)
+        f.close()
+        fX = os.fdopen(fhX, 'wb')
+        scipy.io.mmwrite(fX,X)
+        fX.close()
+        exit()
+
     else:
-        X, Y, N = None
+        X, Y, N = None, None, None
         os.waitpid(pid, 0)
         with open(fname, 'rb') as fh_parent:
-            X = pickle.load(fh_parent)
             Y = pickle.load(fh_parent)
             N = pickle.load(fh_parent)
+        # somehow turns into coo...
+        X = scipy.io.mmread(fnameX).tocsr()
         os.remove(fname)
         return (X, Y, N)
 
@@ -266,7 +274,8 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
 def get_training(training_list):
     training_feat = [x + 'feat' for x in training_list]
     training_resp = [x + 'resp' for x in training_list]
-    return read_features(training_feat, training_resp, X_dict)
+    # return read_features(training_feat, training_resp, X_dict)
+    return read_helper(training_feat, training_resp, X_dict)
 
 
 (X, Y, N) = get_training(args.training)
