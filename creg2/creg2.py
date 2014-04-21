@@ -54,7 +54,7 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
         features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
     vectorizer.fit(features)
-    features = None
+    del features
     gc.collect()
     return vectorizer
 
@@ -95,8 +95,9 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
         all_responses.extend(responses)
     assert len(all_features) == len(all_neighbors) == len(all_responses)
     print len(all_features)
-    all_features = vectorizer.transform(all_features).tocsr()
-    return (all_features, all_responses, all_neighbors)
+    all_features_csr = vectorizer.transform(all_features).tocsr()
+    del all_features
+    return (all_features_csr, all_responses, all_neighbors)
 
 
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
