@@ -60,6 +60,26 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
     return vectorizer
 
 
+def vectorize_helper(feature_file, bias={'bias:1.0'}):
+    import os
+    import cPickle as pickle
+    import tempfile
+
+    fh, fname = tempfile.mkstemp()
+    pid = os.fork()
+    if pid == 0:
+        v = get_vectorizer(feature_file, bias)
+        f = os.fdopen(fh, 'wb')
+        pickle.dump(v, f, protocol=pickle.HIGHEST_PROTOCOL)
+        f.close()
+        exit()
+    else:
+        os.waitpid(pid, 0)
+        with open(fname, 'rb') as fh_parent:
+            v = pickle.load(fh_parent)
+        return v
+
+
 def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
     all_features = []
     all_neighbors = []
@@ -114,12 +134,12 @@ def read_helper(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
     pid = os.fork()
     if pid == 0:
         (X, Y, N) = read_features(feature_files, response_files, vectorizer, bias)
-        f = os.fdopen(fh,'wb')
+        f = os.fdopen(fh, 'wb')
         pickle.dump(Y, f, protocol=pickle.HIGHEST_PROTOCOL)
         pickle.dump(N, f, protocol=pickle.HIGHEST_PROTOCOL)
         f.close()
         fX = os.fdopen(fhX, 'wb')
-        scipy.io.mmwrite(fX,X)
+        scipy.io.mmwrite(fX, X)
         fX.close()
         exit()
 
@@ -132,6 +152,7 @@ def read_helper(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
         # somehow turns into coo...
         X = scipy.io.mmread(fnameX).tocsr()
         os.remove(fname)
+        os.remove(fnameX)
         return (X, Y, N)
 
 
@@ -186,9 +207,11 @@ def predict(model, test_X, test_Y, test_N, inverse_labels, output_file='/dev/nul
 
 
 if args.allfeatures is not None:
-    X_dict = get_vectorizer(args.allfeatures)
+    # X_dict = get_vectorizer(args.allfeatures)
+    X_dict = vectorize_helper(args.allfeatures)
 else:
-    X_dict = get_vectorizer(args.training[0] + 'feat')
+    # X_dict = get_vectorizer(args.training[0] + 'feat')
+    X_dict = vectorize_helper(args.training[0] + 'feat')
 in_dim = len(X_dict.get_feature_names())
 
 sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
