@@ -102,6 +102,31 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
     return (all_features_csr, all_responses, all_neighbors)
 
 
+def read_helper(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
+    import cPickle as pickle
+    import os
+
+    pid = os.fork()
+    import tempfile
+
+    fh, fname = tempfile.mkstemp()
+    if pid == 0:
+        (X, Y, N) = read_features(feature_files, response_files, vectorizer, bias)
+        pickle.dump(X, fh, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(Y, fh, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(N, fh, protocol=pickle.HIGHEST_PROTOCOL)
+        fh.close()
+    else:
+        X, Y, N = None
+        os.waitpid(pid, 0)
+        with open(fname, 'rb') as fh_parent:
+            X = pickle.load(fh_parent)
+            Y = pickle.load(fh_parent)
+            N = pickle.load(fh_parent)
+        os.remove(fname)
+        return (X, Y, N)
+
+
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
               warm_start=0, usingl2=args.usingl2, bias=None):
     print 'l1: {}'.format(l1)
@@ -187,7 +212,8 @@ def write_csv(f_name, preds):
 
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     print dx_file
-    (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
+    # (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
+    (X_dev, Y_dev, N_dev) = read_helper([dx_file], [dy_file], X_dict)
 
     if args.usingl2:
         r = numpy.arange(-2, 4, step=1)
@@ -262,7 +288,8 @@ if args.tx is not None and args.ty is not None:
     model = fit_model(labels, label_features, out_dim, in_dim, X, Y, N, 'model_output', load=args.loadmodel,
                       iterations=args.iterations, warm_start=args.warm, l1=numpy.power(10, args.l1), bias=bias_vec)
 
-    (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
+    # (tX, tY, tN) = read_features([args.tx], [args.ty], X_dict)
+    (tX, tY, tN) = read_helper([args.tx], [args.ty], X_dict)
     gc.collect()
     prediction = predict(model, tX, tY, tN, invlabels, output_file)
     write_csv(output_file + '.csv', prediction)
