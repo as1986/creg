@@ -217,7 +217,7 @@ else:
     # X_dict = vectorize_helper(args.training[0] + 'feat')
 in_dim = len(X_dict.get_feature_names())
 
-sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
+# sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
 
 
 def soft_exact(fname):
