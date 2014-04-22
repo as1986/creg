@@ -63,6 +63,7 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
 
 
 def vectorize_helper(feature_file, bias={'bias:1.0'}):
+    return get_vectorizer(feature_file,bias)
     import os
     import cPickle as pickle
     import tempfile
