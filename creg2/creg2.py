@@ -70,18 +70,19 @@ def vectorize_helper(feature_file, bias={'bias:1.0'}):
     fh, fname = tempfile.mkstemp()
     pid = os.fork()
     if pid == 0:
-        v = get_vectorizer(feature_file, bias)
-        f = os.fdopen(fh, 'wb')
-        pickle.dump(v, f, protocol=pickle.HIGHEST_PROTOCOL)
-        f.close()
+        # v = get_vectorizer(feature_file, bias)
+        # f = os.fdopen(fh, 'wb')
+        # pickle.dump(v, f, protocol=pickle.HIGHEST_PROTOCOL)
+        # f.close()
         exit()
     else:
-        os.waitpid(pid, 0)
-        v = None
-        with open(fname, 'rb') as fh_parent:
-            v = pickle.load(fh_parent)
-        os.remove(fname)
-        return v
+        return get_vectorizer(feature_file,bias)
+        # os.waitpid(pid, 0)
+        # v = None
+        # with open(fname, 'rb') as fh_parent:
+        #     v = pickle.load(fh_parent)
+        # os.remove(fname)
+        # return v
 
 
 def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
