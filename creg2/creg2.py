@@ -77,6 +77,7 @@ def vectorize_helper(feature_file, bias={'bias:1.0'}):
         exit()
     else:
         os.waitpid(pid, 0)
+        v = None
         with open(fname, 'rb') as fh_parent:
             v = pickle.load(fh_parent)
         os.remove(fname)
