@@ -54,7 +54,11 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
     if not args.bias:
         features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
-    vectorizer.fit(features)
+    try:
+        vectorizer.fit(features)
+    except Exception as e:
+        print e
+        raise e
     return vectorizer
 
 
@@ -206,11 +210,11 @@ def predict(model, test_X, test_Y, test_N, inverse_labels, output_file='/dev/nul
 
 
 if args.allfeatures is not None:
-    # X_dict = get_vectorizer(args.allfeatures)
-    X_dict = vectorize_helper(args.allfeatures)
+    X_dict = get_vectorizer(args.allfeatures)
+    # X_dict = vectorize_helper(args.allfeatures)
 else:
-    # X_dict = get_vectorizer(args.training[0] + 'feat')
-    X_dict = vectorize_helper(args.training[0] + 'feat')
+    X_dict = get_vectorizer(args.training[0] + 'feat')
+    # X_dict = vectorize_helper(args.training[0] + 'feat')
 in_dim = len(X_dict.get_feature_names())
 
 sys.stderr.write('INPUT-FEATURES: %s\n' % ' '.join(X_dict.get_feature_names()))
