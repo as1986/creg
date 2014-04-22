@@ -55,8 +55,6 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
         features.append(bias)
     vectorizer = feature_extraction.DictVectorizer()
     vectorizer.fit(features)
-    del features
-    gc.collect()
     return vectorizer
 
 
@@ -77,6 +75,7 @@ def vectorize_helper(feature_file, bias={'bias:1.0'}):
         os.waitpid(pid, 0)
         with open(fname, 'rb') as fh_parent:
             v = pickle.load(fh_parent)
+        os.remove(fname)
         return v
 
 
