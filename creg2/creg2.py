@@ -33,7 +33,8 @@ for line in open(args.label):
     labels[label] = len(labels)
     features.append(json.loads(f))
 label_dict = feature_extraction.DictVectorizer()
-label_features = label_dict.fit_transform(features).tocsr()
+# label_features = label_dict.fit_transform(features).tocsr()
+label_features = label_dict.fit_transform(features)
 features = None
 
 import gc
@@ -62,8 +63,7 @@ def get_vectorizer(feature_file, bias={'bias': 1.0}):
     return vectorizer
 
 
-def vectorize_helper(feature_file, bias={'bias:1.0'}):
-    return get_vectorizer(feature_file,bias)
+def vectorize_helper(feature_file, bias={'bias':1.0}):
     import os
     import cPickle as pickle
     import tempfile
@@ -71,19 +71,18 @@ def vectorize_helper(feature_file, bias={'bias:1.0'}):
     fh, fname = tempfile.mkstemp()
     pid = os.fork()
     if pid == 0:
-        # v = get_vectorizer(feature_file, bias)
-        # f = os.fdopen(fh, 'wb')
-        # pickle.dump(v, f, protocol=pickle.HIGHEST_PROTOCOL)
-        # f.close()
+        v = get_vectorizer(feature_file, bias)
+        f = os.fdopen(fh, 'wb')
+        pickle.dump(v, f, protocol=pickle.HIGHEST_PROTOCOL)
+        f.close()
         exit()
     else:
-        return get_vectorizer(feature_file,bias)
-        # os.waitpid(pid, 0)
-        # v = None
-        # with open(fname, 'rb') as fh_parent:
-        #     v = pickle.load(fh_parent)
-        # os.remove(fname)
-        # return v
+        os.waitpid(pid, 0)
+        v = None
+        with open(fname, 'rb') as fh_parent:
+            v = pickle.load(fh_parent)
+        os.remove(fname)
+        return v
 
 
 def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
@@ -123,9 +122,9 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
         all_responses.extend(responses)
     assert len(all_features) == len(all_neighbors) == len(all_responses)
     print len(all_features)
-    all_features_csr = vectorizer.transform(all_features).tocsr()
-    del all_features
-    return (all_features_csr, all_responses, all_neighbors)
+    all_features_dense = vectorizer.transform(all_features)
+    # all_features_csr = all_features_dense.tocsr()
+    return (all_features_dense, all_responses, all_neighbors)
 
 
 def read_helper(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
@@ -156,7 +155,8 @@ def read_helper(feature_files, response_files, vectorizer, bias={'bias': 1.0}):
             Y = pickle.load(fh_parent)
             N = pickle.load(fh_parent)
         # somehow turns into coo...
-        X = scipy.io.mmread(fnameX).tocsr()
+        # X = scipy.io.mmread(fnameX).tocsr()
+        X = scipy.io.mmread(fnameX)
         os.remove(fname)
         os.remove(fnameX)
         return (X, Y, N)
