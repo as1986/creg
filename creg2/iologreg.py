@@ -1,7 +1,9 @@
-import numpy as np
 import random
 import math
 import sys
+
+import numpy as np
+
 
 INFINITY = float('inf')
 
@@ -37,10 +39,19 @@ class IOLogisticRegression:
         self.l1 = l1
         self.l2 = l2
 
+    def sparse_dot(self, x, y):
+        assert x.shape[0] == 1
+        to_return = np.zeros(shape=(x.shape[0],y.shape[1]))
+        nonzeros = x.nonzero()[1]
+        for nz in nonzeros:
+            to_return += x[0,nz] * y[nz]
+        return to_return
+
     def gradient(self, x, n, y, y_feats, W, G):
         z = -INFINITY
         log_probs = np.zeros(self.num_labels)
-        xw = x.dot(W)
+        # xw = x.dot(W)
+        xw = self.sparse_dot(x, W)
         found = False
         for yi in n:
             if yi == y: found = True
@@ -48,7 +59,7 @@ class IOLogisticRegression:
             # print 'w: {}, {}'.format(W, len(W))
             # print 'xw: {}'.format(xw)
             # print 'lbl features: {}, {}'.format(y_feats[yi], len(y_feats[yi]))
-            u = xw.dot(y_feats[yi])
+            u = xw.dot(y_feats[yi].T)
             # print 'u: {}, {}'.format(u, len(u))
             log_probs[yi] = u
             z = logadd(z, u)
@@ -58,14 +69,22 @@ class IOLogisticRegression:
         loss = -(log_probs[y] - z)
         for yi in n:
             delta = math.exp(log_probs[yi] - z) - (yi == y)
-            G += np.outer(x, y_feats[yi]) * delta
+
+            # print x.shape
+            # print y_feats[yi].T.shape
+            # print x[0] * y_feats[yi].T[0]
+            # print x.T.shape
+
+
+            # print x.T * np.matrix(y_feats[yi])
+            G += x.T * y_feats[yi] * delta
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
             l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None):
         self.l1 = l1
         print 'lambda: {}'.format(self.l1)
-        minibatch_size = min(minibatch_size, len(X))
+        minibatch_size = min(minibatch_size, X.shape[0])
         self.num_labels = num_labels
         self.y_feats = y_feats
         self.W = np.zeros(shape=(infeats, outfeats))
@@ -75,11 +94,11 @@ class IOLogisticRegression:
         U = np.zeros(shape=(infeats, outfeats))
         ld = np.ones(shape=(infeats, outfeats)) * self.l1
         if bias is not None:
-            if using_l2: 
-                bias_mask = ((np.vstack([bias] * outfeats) * (1-self.l1))).transpose()
+            if using_l2:
+                bias_mask = ((np.vstack([bias] * outfeats) * (1 - self.l1))).transpose()
             else:
                 bias_mask = ((np.vstack([bias] * outfeats) * (-self.l1))).transpose()
-            
+
             ld += bias_mask
 
         if load_from is not None:
@@ -132,18 +151,18 @@ class IOLogisticRegression:
         z = -INFINITY
         xw = x.dot(self.W)
         for y in n:
-            u = xw.dot(self.y_feats[y])
+            u = xw.dot(self.y_feats[y].T)
             probs[y] = u
             z = logadd(z, u)
         for y in n:
             probs[y] = math.exp(probs[y] - z)
 
     def predict(self, X, N):
-        post = np.zeros(shape=(len(X), self.num_labels))
+        post = np.zeros(shape=(X.shape[0], self.num_labels))
         return post
 
     def predict_proba(self, X, N):
-        post = np.zeros(shape=(len(X), self.num_labels))
+        post = np.zeros(shape=(X.shape[0], self.num_labels))
         for (x, n, p) in zip(X, N, post):
             self.predict_(x, n, p)
         return post
