@@ -190,6 +190,7 @@ def write_csv(f_name, preds):
 
 
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
+    import numpy, math
     print dx_file
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
 
@@ -214,7 +215,6 @@ def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
         pid = os.fork()
         if pid != 0:
             continue
-        import numpy, math
 
         param = math.pow(10, step)
         model = fit_model(labels, label_features, out_dim, in_dim, X_train, Y_train, N_train,
