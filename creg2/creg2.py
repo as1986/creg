@@ -23,6 +23,7 @@ parser.add_argument('--loadmodel', type=str, help='load a trained model')
 parser.add_argument('--l1', type=float, help='l1 prior (log10)')
 parser.add_argument('--usingl2', action='store_true', help='use l2 instead of l1')
 parser.add_argument('--bias', action='store_true', help='regularization of bias')
+parser.add_argument('--honor-neighbors', action='store_true', help='use neighbors specified in the .feat files (otherwise all possible labels will be used.)')
 args = parser.parse_args()
 
 features = []
@@ -72,13 +73,16 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
             if not args.bias:
                 loaded_features.update(bias)
             features.append(loaded_features)
-            neighborhood = json.loads(n)['N']
-            if len(neighborhood) == 0:
-                sys.stderr.write('[ERROR] empty neighborhood in line:\n%s' % line)
-                sys.exit(1)
-            if len(neighborhood) == 1:
-                sys.stderr.write('[WARNING] neighborhood for id="%s" is singleton: %s\n' % (id, str(neighborhood)))
-            n = [labels[x] for x in neighborhood]
+            if args.honor_neighbors:
+                neighborhood = json.loads(n)['N']
+                if len(neighborhood) == 0:
+                    sys.stderr.write('[ERROR] empty neighborhood in line:\n%s' % line)
+                    sys.exit(1)
+                if len(neighborhood) == 1:
+                    sys.stderr.write('[WARNING] neighborhood for id="%s" is singleton: %s\n' % (id, str(neighborhood)))
+                n = [labels[x] for x in neighborhood]
+            else:
+                n = [x for x in labels.values()]
             neighbors.append(n)
         # read gold labels
         responses = [0 for x in xrange(len(features))]
