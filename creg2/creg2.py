@@ -109,8 +109,8 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2
               warm_start=0, usingl2=args.usingl2, bias=None):
     def get_cost_matrix():
         costs = dict()
-        for i in len(lbl_feat):
-            for j in len(lbl_feat):
+        for i in range(len(lbl_feat)):
+            for j in range(len(lbl_feat)):
                 costs[(i, j)] = cost(i, j)
 
         # normalize
