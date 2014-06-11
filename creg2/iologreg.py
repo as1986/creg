@@ -41,10 +41,10 @@ class IOLogisticRegression:
 
     def sparse_dot(self, x, y):
         assert x.shape[0] == 1
-        to_return = np.zeros(shape=(x.shape[0],y.shape[1]))
+        to_return = np.zeros(shape=(x.shape[0], y.shape[1]))
         nonzeros = x.nonzero()[1]
         for nz in nonzeros:
-            to_return += x[0,nz] * y[nz]
+            to_return += x[0, nz] * y[nz]
         return to_return
 
     def gradient(self, x, n, y, y_feats, W, G):
@@ -59,7 +59,7 @@ class IOLogisticRegression:
             # print 'w: {}, {}'.format(W, len(W))
             # print 'xw: {}'.format(xw)
             # print 'lbl features: {}, {}'.format(y_feats[yi], len(y_feats[yi]))
-            u = xw.dot(y_feats[yi].T)
+            u = xw.dot(y_feats[yi].T) + self.cost[(yi, y)]
             # print 'u: {}, {}'.format(u, len(u))
             log_probs[yi] = u
             z = logadd(z, u)
@@ -81,13 +81,14 @@ class IOLogisticRegression:
         return loss
 
     def fit(self, infeats, outfeats, X, N, Y, y_feats, num_labels, iterations=1000, minibatch_size=100, eta=1.0,
-            l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None):
+            l1=2., write=True, load_from=None, warm=0, using_l2=False, bias=None, cost=None):
         self.l1 = l1
         print 'lambda: {}'.format(self.l1)
         minibatch_size = min(minibatch_size, X.shape[0])
         self.num_labels = num_labels
         self.y_feats = y_feats
         self.W = np.zeros(shape=(infeats, outfeats))
+        self.cost = cost
 
         G = np.zeros(shape=(infeats, outfeats))
         H = np.ones(shape=(infeats, outfeats)) * 1e-300

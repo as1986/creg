@@ -23,7 +23,8 @@ parser.add_argument('--loadmodel', type=str, help='load a trained model')
 parser.add_argument('--l1', type=float, help='l1 prior (log10)')
 parser.add_argument('--usingl2', action='store_true', help='use l2 instead of l1')
 parser.add_argument('--bias', action='store_true', help='regularization of bias')
-parser.add_argument('--honor-neighbors', action='store_true', help='use neighbors specified in the .feat files (otherwise all possible labels will be used.)')
+parser.add_argument('--honor-neighbors', action='store_true',
+                    help='use neighbors specified in the .feat files (otherwise all possible labels will be used.)')
 args = parser.parse_args()
 
 features = []
@@ -41,6 +42,12 @@ label_features = label_dict.fit_transform(features).toarray()
 sys.stderr.write('        LABELS: %s\n' % ' '.join(labels.keys()))
 sys.stderr.write('LABEL-FEATURES: %s\n' % ' '.join(label_dict.get_feature_names()))
 out_dim = len(label_dict.get_feature_names())
+
+
+def cost(y1, y2):
+    s1 = set(features[y1])
+    s2 = set(features[y2])
+    return len(s1.intersection(s2))
 
 
 def get_vectorizer(feature_file, bias={'bias': 1.0}):
@@ -100,6 +107,20 @@ def read_features(feature_files, response_files, vectorizer, bias={'bias': 1.0})
 
 def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2, load=None, iterations=3000,
               warm_start=0, usingl2=args.usingl2, bias=None):
+    def get_cost_matrix():
+        costs = dict()
+        for i in len(lbl_feat):
+            for j in len(lbl_feat):
+                costs[(i, j)] = cost(i, j)
+
+        # normalize
+        minimal = min(costs.values())
+        maximal = max(costs.values())
+        normalized = {k: 1 - (v - minimal) / (maximal - minimal) for (k, v) in costs.iteritems()}
+        return normalized
+
+    cost_matrix = get_cost_matrix()
+
     print 'l1: {}'.format(l1)
     assert len(X) == len(N)
     assert len(Y) == len(X)
@@ -108,13 +129,14 @@ def fit_model(lbl, lbl_feat, out_dim, in_dim, X, Y, N, write_model=None, l1=1e-2
         bias = None
 
     from scipy import sparse
+
     sparse_X = sparse.csr_matrix(X)
     import numpy as np
 
     # sparse_X = np.matrix(X)
     sparse_feats = np.matrix(lbl_feat)
     model.fit(in_dim, out_dim, sparse_X, N, Y, sparse_feats, len(lbl), iterations=iterations, minibatch_size=20, l1=l1,
-              write=True, load_from=load, warm=warm_start, using_l2=usingl2, bias=bias)
+              write=True, load_from=load, warm=warm_start, using_l2=usingl2, bias=bias, cost=cost_matrix)
     if write_model is not None:
         with open(write_model, 'w') as writer:
             writer.write(json.dumps(get_descriptive_weights(model.W, label_dict, X_dict)))
@@ -137,8 +159,8 @@ def get_descriptive_weights(W, lbl_dict, x_dict):
 
 def predict(model, test_X, test_Y, test_N, inverse_labels, output_file='/dev/null'):
     from scipy import sparse
+
     sparse_X = sparse.csr_matrix(test_X)
-    import numpy as np
 
     # sparse_X = np.matrix(test_X)
     D = model.predict_proba(sparse_X, test_N)
@@ -195,6 +217,7 @@ def write_csv(f_name, preds):
 
 def dev_lambda(dx_file, dy_file, X_train, Y_train, N_train):
     import numpy, math
+
     print dx_file
     (X_dev, Y_dev, N_dev) = read_features([dx_file], [dy_file], X_dict)
 
